@@ -1,0 +1,942 @@
+<script>
+import { nextTick } from "vue";
+import Modal from "../components/Modal.vue";
+import Toast from "primevue/toast";
+export default {
+  components: {
+    Modal,
+  },
+  data() {
+    return {
+      stream: null,
+      selectedFilter: "none", // Default filter
+      capturedImages: [], // Array to store captured images
+      timerActive: false, // Flag to indicate if the timer is active
+      countdown: 5, // Initial countdown value (5 seconds)
+      numberOfResults: 1, // Default number of result divs (will change when clicked)
+      autoCaptureInterval: null, // To hold the interval ID for auto capture
+      countdownInterval: null, // To hold the interval ID for countdown
+      modalRef: null,
+      selectedColor: "bg-rose-400",
+      selectedOrientation: "flex-row",
+      recognition: null,
+      isMirrored: true,
+      isDropdownVisible: false,
+      isStickerClicked: false,
+      imageFolder: "",
+      activeSticker: null,
+    };
+  },
+  methods: {
+    toggleDropdown() {
+      this.isDropdownVisible = !this.isDropdownVisible;
+    },
+    // Method to set the number of results dynamically
+    setNumberOfResults(count) {
+      this.numberOfResults = count;
+      this.capturedImages = []; // Reset captured images each time number of results is set
+      this.countdown = 5; // Reset countdown
+    },
+
+    // Start the auto capture process
+    startAutoCapture(count) {
+      this.numberOfResults = count;
+      this.capturedImages = []; // Reset captured images array
+      this.countdown = 5; // Reset countdown to 5 seconds
+      this.timerActive = true;
+
+      // Start countdown interval
+      this.startCountdown();
+
+      // Set an interval to auto capture and countdown
+      this.autoCaptureInterval = setInterval(() => {
+        console.log(this.numberOfResults);
+        console.log(this.capturedImages.length);
+
+        if (this.capturedImages.length < this.numberOfResults) {
+          this.capture(); // Capture the image
+          this.countdown = 5; // Reset the countdown for next capture
+        } else {
+          clearInterval(this.autoCaptureInterval); // Stop the interval when number of results is met
+          this.timerActive = false; // Stop the timer
+          clearInterval(this.countdownInterval); // Clear the countdown interval
+          this.startRecognition();
+        }
+      }, 5000); // Every 5 seconds, capture an image
+    },
+
+    // Method to start the countdown
+    startCountdown() {
+      // Clear any existing countdown interval before starting a new one
+      if (this.countdownInterval) clearInterval(this.countdownInterval);
+
+      // Start countdown interval
+      this.countdownInterval = setInterval(() => {
+        if (this.countdown > 0) {
+          this.countdown -= 1; // Decrement countdown every second
+        } else {
+          // Reset countdown and capture image
+          this.countdown = 5;
+          this.capture(); // Capture image at the end of countdown
+        }
+      }, 1000); // Update countdown every second
+    },
+
+    capture() {
+      const videoElement = this.$refs.video;
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // Set canvas dimensions to match video dimensions
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+
+      // Apply horizontal flip (mirror effect) by scaling the context
+      ctx.scale(-1, 1); // Flip horizontally
+      ctx.translate(-canvas.width, 0); // Translate the canvas to keep the flipped image within bounds
+
+      // Draw the current video frame onto the canvas
+      ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+      // Convert the canvas to an image URL
+      const capturedImage = canvas.toDataURL("image/png");
+
+      // Push the captured image to the capturedImages array
+      if (this.capturedImages.length < this.numberOfResults) {
+        this.capturedImages.push(capturedImage);
+      } else {
+        this.timerActive = false; // Stop the timer
+      }
+
+      // Reset countdown to 5 after capture
+      this.countdown = 5; // Reset the countdown for next capture
+    },
+
+    toggleMirrorEffect() {
+      this.isMirrored = !this.isMirrored; // Toggle the mirror effect
+      const videoElement = this.$refs.video;
+      videoElement.style.transform = this.isMirrored ? "scaleX(-1)" : "scaleX(1)"; // Update the video style
+    },
+    // Method to start the camera
+    async startCamera() {
+      try {
+        // Request access to the user's camera
+        this.stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+        // Attach the stream to the video element
+        const videoElement = this.$refs.video;
+        videoElement.srcObject = this.stream;
+
+        // Apply mirror effect conditionally based on the `isMirrored` state
+        videoElement.style.transform = this.isMirrored ? "scaleX(-1)" : "scaleX(1)"; // Mirror or un-mirror
+      } catch (error) {
+        console.error("Error accessing camera: ", error);
+      }
+    },
+    // Method to stop the camera stream
+    stopCamera() {
+      if (this.stream) {
+        // Stop all tracks of the stream (to stop the camera)
+        this.stream.getTracks().forEach((track) => track.stop());
+        this.stream = null;
+      }
+    },
+
+    openModal() {
+      if (this.capturedImages.length === 0) {
+        console.log("no image");
+      } else {
+        console.log("has image");
+        nextTick(() => {
+          // Ensure the modal component is rendered and available
+          if (this.$refs.modalRef) {
+            this.$refs.modalRef.openModal(); // Call openModal method on the modal reference
+          }
+        });
+      }
+    },
+
+    startRecognition() {
+      this.recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      this.recognition.lang = "en-US";
+      this.recognition.interimResults = false;
+      this.recognition.maxAlternatives = 1;
+      this.recognition.continuous = true; // Keep listening continuously
+
+      // Handle the result of speech recognition
+      this.recognition.onresult = (event) => {
+        const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
+        console.log("You said:", transcript);
+
+        // Check if the user said "smile"
+        if (transcript.includes("smile")) {
+          const count = this.numberOfResults; // Define the count (you can adjust based on your need)
+          this.startAutoCapture(count); // Start capturing images
+
+          // Stop speech recognition after detecting "smile"
+          this.recognition.stop();
+        }
+      };
+
+      // Handle speech recognition errors
+      this.recognition.onerror = (event) => {
+        console.error("Speech recognition error", event.error);
+      };
+
+      // Start listening for speech
+      this.recognition.start();
+    },
+
+    downloadCollage() {
+      // Helper function to draw images with borders on the canvas
+      const drawImageWithBorder = (
+        image,
+        x,
+        y,
+        width,
+        height,
+        borderThickness,
+        borderColor,
+        ctx,
+        filter
+      ) => {
+        // Draw the border first (without the filter)
+        ctx.lineWidth = borderThickness;
+        ctx.strokeStyle = borderColor;
+        ctx.strokeRect(x, y, width, height); // Draw the border (around the image)
+
+        // Apply the selected filter only to the image
+        ctx.filter = filter;
+
+        // Draw the image inside the border
+        ctx.drawImage(
+          image,
+          x + borderThickness / 2, // Adjust to ensure the image fits within the border
+          y + borderThickness / 2, // Adjust to ensure the image fits within the border
+          width - borderThickness, // Reduce the width to account for the border
+          height - borderThickness // Reduce the height to account for the border
+        );
+      };
+
+      // Helper function to create and load an image, then call a callback when it's loaded
+      const loadImage = (src, callback) => {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => callback(img);
+        img.onerror = (err) => {
+          console.error("Failed to load image:", src, err);
+        };
+      };
+
+      // Canvas setup
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // Image properties
+      const imageWidth = 1600; // Width of each image
+      const imageHeight = 1200; // Height of each image
+      const borderThickness = 200; // Set border thickness to 200px
+
+      // Assign borderColor based on selectedColor (using conditional logic)
+      let borderColor;
+      if (this.selectedColor === "bg-rose-400") {
+        borderColor = "#fb7185";
+      } else if (this.selectedColor === "bg-red-400") {
+        borderColor = "#f87171";
+      } else if (this.selectedColor === "bg-pink-400") {
+        borderColor = "#f472b6";
+      } else if (this.selectedColor === "bg-blue-400") {
+        borderColor = "#60a5fa";
+      } else if (this.selectedColor === "bg-green-400") {
+        borderColor = "#4ade80";
+      } else if (this.selectedColor === "bg-yellow-400") {
+        borderColor = "#fbbf24";
+      } else if (this.selectedColor === "bg-amber-400") {
+        borderColor = "#f59e0b";
+      } else if (this.selectedColor === "bg-cyan-400") {
+        borderColor = "#22d3ee";
+      } else if (this.selectedColor === "bg-fuchsia-400") {
+        borderColor = "#d946ef";
+      } else if (this.selectedColor === "bg-purple-400") {
+        borderColor = "#9f7aea";
+      } else if (this.selectedColor === "bg-orange-400") {
+        borderColor = "#fb923c";
+      } else {
+        // Default to a safe color if none of the conditions match
+        borderColor = "#fb7185"; // Default to "rose" color
+      }
+
+      // Number of images to display (all images will be in one row)
+      const totalImages = this.capturedImages.length;
+
+      let collageWidth, collageHeight;
+
+      // If in landscape mode, create a horizontal collage (flex-row)
+      if (this.selectedOrientation === "flex-row") {
+        collageWidth = totalImages * imageWidth; // Total width for the collage
+        collageHeight = imageHeight; // Single row, so height is the same as image height
+      }
+      // If in portrait mode, create a vertical collage (flex-col)
+      else if (this.selectedOrientation === "flex-col") {
+        collageWidth = imageWidth; // Single column, so width is just the image width
+        collageHeight = totalImages * imageHeight; // Total height for the collage
+      }
+
+      // Set the canvas size
+      canvas.width = collageWidth;
+      canvas.height = collageHeight;
+
+      let imagesLoaded = 0;
+      let stickersLoaded = 0; // Track loaded stickers
+
+      // Draw the images in a single row
+      this.capturedImages.forEach((imageUrl, index) => {
+        loadImage(imageUrl, (image) => {
+          // Calculate the x position for each image (in a straight horizontal line)
+          let x, y;
+
+          // Calculate the x and y position for each image
+          if (this.selectedOrientation === "flex-row") {
+            x = index * imageWidth; // Horizontal layout: each image next to each other
+            y = 0; // Single row, so y is always 0
+          } else if (this.selectedOrientation === "flex-col") {
+            x = 0; // Single column, so x is always 0
+            y = index * imageHeight; // Vertical layout: each image below the previous one
+          }
+
+          // Draw the image with border on the canvas (collage section)
+          drawImageWithBorder(
+            image,
+            x,
+            y,
+            imageWidth,
+            imageHeight,
+            borderThickness,
+            borderColor, // Apply the selected color to the border
+            ctx,
+            this.selectedFilter
+          );
+
+          imagesLoaded++;
+
+          // Once all images are loaded, draw the stickers
+          if (imagesLoaded === totalImages) {
+            // Stickers (calculated dynamically based on canvas size)
+            if (this.isStickerClicked) {
+              const stickers = [
+                {
+                  src: `${this.imageFolder}/cc1.png`,
+                  x: collageWidth * 0.02,
+                  y: collageHeight - 150,
+                  width: 200,
+                  height: 200,
+                },
+                {
+                  src: `${this.imageFolder}/cc6.png`,
+                  x: collageWidth - 600,
+                  y: collageHeight * 0.02,
+                  width: 200,
+                  height: 200,
+                },
+                {
+                  src: `${this.imageFolder}/cc3.png`,
+                  x: collageWidth - 250,
+                  y: collageHeight - 150,
+                  width: 200,
+                  height: 200,
+                },
+                {
+                  src: `${this.imageFolder}/cc4.png`,
+                  x: collageWidth * 0.5,
+                  y: collageHeight * 0.01,
+                  width: 200,
+                  height: 200,
+                },
+                {
+                  src: `${this.imageFolder}/cc5.png`,
+                  x: collageWidth * 0.1,
+                  y: collageHeight * 0.01,
+                  width: 200,
+                  height: 200,
+                },
+                {
+                  src: `${this.imageFolder}/cc2.png`,
+                  x: collageWidth * 0.6,
+                  y: collageHeight - 150,
+                  width: 200,
+                  height: 200,
+                },
+              ];
+
+              // Loading each sticker and drawing after images are drawn
+              stickers.forEach((sticker) => {
+                loadImage(sticker.src, (stickerImage) => {
+                  // Scale down the sticker image if it's too large
+                  console.log(`Drawing sticker at x: ${sticker.src}`);
+
+                  const stickerWidth = Math.min(sticker.width, stickerImage.width);
+                  const stickerHeight = Math.min(sticker.height, stickerImage.height);
+
+                  // Debugging sticker positions and sizes
+                  console.log(`Drawing sticker at x: ${sticker.x}, y: ${sticker.y}`);
+                  console.log("Sticker Image Dimensions:", stickerImage.width, stickerImage.height);
+
+                  // Draw sticker AFTER images are drawn, ensuring it's in front
+                  ctx.drawImage(stickerImage, sticker.x, sticker.y, stickerWidth, stickerHeight);
+                  stickersLoaded++; // Increment the loaded stickers count
+
+                  // Check if all stickers are loaded
+                  if (stickersLoaded === stickers.length) {
+                    // Trigger the download after adding stickers
+                    const link = document.createElement("a");
+                    link.download = "smile.png";
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+                  }
+                });
+              });
+            } else {
+              // If no stickers are clicked, trigger the download immediately
+              const link = document.createElement("a");
+              link.download = "smile.png";
+              link.href = canvas.toDataURL("image/png");
+              link.click();
+            }
+          }
+        });
+      });
+    },
+
+    stickerOn(value) {
+      if (value === "cat") {
+        this.isStickerClicked = true; // Toggle visibility
+        this.activeSticker = "cat";
+        this.imageFolder = "/public/catcouple"; // Set image folder to cat
+      } else if (value === "dog") {
+        this.activeSticker = "dog";
+        this.isStickerClicked = true; // Toggle visibility
+        this.imageFolder = "/public/dog"; // Set image folder to dog
+      } else if (value === "tulip") {
+        this.activeSticker = "tulip";
+        this.isStickerClicked = true; // Toggle visibility
+        this.imageFolder = "/public/tulip"; // Set image folder to dog
+      } else if (value === "berry") {
+        this.activeSticker = "berry";
+        this.isStickerClicked = true; // Toggle visibility
+        this.imageFolder = "/public/berry"; // Set image folder to dog
+      }
+    },
+
+    removeSticker() {
+      this.isStickerClicked = false; // Hide the images
+      this.activeSticker = null; // Reset the active sticker
+    },
+  },
+  mounted() {
+    // Automatically start the camera when the component is mounted
+    this.startCamera();
+    this.startRecognition();
+  },
+
+  beforeDestroy() {
+    // Ensure camera is stopped when the component is destroyed
+    this.stopCamera();
+    // Clear interval if it exists
+    if (this.autoCaptureInterval) {
+      clearInterval(this.autoCaptureInterval);
+    }
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+    }
+  },
+};
+</script>
+
+<template>
+  <div class="flex-1 flex flex-col">
+    <Modal ref="modalRef">
+      <div class="rounded-xl shadow-xl w-full flex flex-col gap-4 items-center p-2">
+        <div class="w-full flex justify-center p-1">
+          <h2 class="text-2xl font-semibold text-zinc-900 dark:text-white ubuntu-bold">Preview</h2>
+        </div>
+
+        <div class="w-full flex justify-between items-center p-1 border-b border-gray-300">
+          <div class="w-1/3">
+            <label class="ubuntu-bold">Border:</label>
+            <div class="p-2 gap-3 flex flex-wrap">
+              <input
+                type="button"
+                :style="{ backgroundColor: '#f87171' }"
+                class="h-5 w-5 shadow-md hover:scale-125 transition-all duration-300 rounded-full border-none cursor-pointer"
+                @click="selectedColor = 'bg-red-400'"
+              />
+              <input
+                type="button"
+                :style="{ backgroundColor: '#60a5fa' }"
+                class="h-5 w-5 shadow-md hover:scale-125 transition-all duration-300 rounded-full border-none cursor-pointer"
+                @click="selectedColor = 'bg-blue-400'"
+              />
+              <input
+                type="button"
+                :style="{ backgroundColor: '#4ade80' }"
+                class="h-5 w-5 shadow-md hover:scale-125 transition-all duration-300 rounded-full border-none cursor-pointer"
+                @click="selectedColor = 'bg-green-400'"
+              />
+              <input
+                type="button"
+                :style="{ backgroundColor: '#fbbf24' }"
+                class="h-5 w-5 shadow-md hover:scale-125 transition-all duration-300 rounded-full border-none cursor-pointer"
+                @click="selectedColor = 'bg-yellow-400'"
+              />
+              <input
+                type="button"
+                :style="{ backgroundColor: '#9f7aea' }"
+                class="h-5 w-5 shadow-md hover:scale-125 transition-all duration-300 rounded-full border-none cursor-pointer"
+                @click="selectedColor = 'bg-purple-400'"
+              />
+              <input
+                type="button"
+                :style="{ backgroundColor: '#fb923c' }"
+                class="h-5 w-5 shadow-md hover:scale-125 transition-all duration-300 rounded-full border-none cursor-pointer"
+                @click="selectedColor = 'bg-orange-400'"
+              />
+              <input
+                type="button"
+                :style="{ backgroundColor: '#f472b6' }"
+                class="h-5 w-5 shadow-md hover:scale-125 transition-all duration-300 rounded-full border-none cursor-pointer"
+                @click="selectedColor = 'bg-pink-400'"
+              />
+              <input
+                type="button"
+                :style="{ backgroundColor: '#22d3ee' }"
+                class="h-5 w-5 shadow-md hover:scale-125 transition-all duration-300 rounded-full border-none cursor-pointer"
+                @click="selectedColor = 'bg-cyan-400'"
+              />
+              <input
+                type="button"
+                :style="{ backgroundColor: '#d946ef' }"
+                class="h-5 w-5 shadow-md hover:scale-125 transition-all duration-300 rounded-full border-none cursor-pointer"
+                @click="selectedColor = 'bg-fuchsia-400'"
+              />
+              <input
+                type="button"
+                :style="{ backgroundColor: '#f59e0b' }"
+                class="h-5 w-5 shadow-md hover:scale-125 transition-all duration-300 rounded-full border-none cursor-pointer"
+                @click="selectedColor = 'bg-amber-400'"
+              />
+            </div>
+          </div>
+
+          <!-- From Uiverse.io by Yaya12085 -->
+          <div class="w-1/3">
+            <label class="ubuntu-bold">Orientation:</label>
+
+            <div class="radio-inputs">
+              <label class="radio">
+                <input type="radio" name="radio" value="flex-row" v-model="selectedOrientation" />
+                <span class="name ubuntu-regular">Landscape</span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="radio" value="flex-col" v-model="selectedOrientation" />
+                <span class="name ubuntu-regular">Portrait</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="photostrip"
+          :class="[
+            'flex',
+            selectedOrientation,
+            'items-center',
+            'gap-4',
+            'p-4',
+            'relative',
+            selectedColor,
+            selectedOrientation === 'flex-row' ? 'justify-center' : '',
+            selectedOrientation === 'flex-col' ? 'max-h-80 overflow-y-auto' : '',
+          ]"
+        >
+          <div v-if="isStickerClicked" class="z-20 absolute w-full h-full">
+            <img :src="`${imageFolder}/cc1.png`" class="w-10 bottom-3 absolute left-0" alt="" />
+            <img :src="`${imageFolder}/cc3.png`" class="w-10 top-20 absolute right-0" alt="" />
+            <img :src="`${imageFolder}/cc4.png`" class="w-10 top-0 absolute left-60" alt="" />
+            <img :src="`${imageFolder}/cc2.png`" class="w-10 bottom-0 absolute right-72" alt="" />
+            <img :src="`${imageFolder}/cc5.png`" class="w-10 top-0 absolute left-20" alt="" />
+            <img :src="`${imageFolder}/cc6.png`" class="w-10 top-0 absolute right-40" alt="" />
+          </div>
+          <div
+            v-for="index in numberOfResults"
+            :key="index"
+            class="w-3/4 h-1/3 bg-white shadow-xl rounded-xl"
+          >
+            <img
+              v-if="capturedImages[index - 1]"
+              :src="capturedImages[index - 1]"
+              alt="Captured Snapshot"
+              class="w-full h-auto object-cover"
+              :style="{
+                filter: selectedFilter,
+                maxHeight: selectedOrientation === 'flex-col' ? 'auto' : '250px',
+                maxWidth: selectedOrientation === 'flex-row' ? 'auto' : '100%',
+              }"
+            />
+          </div>
+        </div>
+        <div class="w-full justify-between flex items-center">
+          <div class="flex justify-center">
+            <div class="">
+              <button @click="toggleDropdown" class="px-4 py-1 bg-orange-900 text-white rounded">
+                Stickers
+              </button>
+              <div v-show="isDropdownVisible" class="mt-2 absolute z-50">
+                <ul class="bg-white border rounded shadow-md flex">
+                  <li class="px-4 py-2" @click="stickerOn('cat')">
+                    <img
+                      src="/public/catcouple/cc1.png"
+                      class="w-12 hover:scale-105 transition-all duration-300 cursor-pointer hover:bg-orange-200 rounded-full p-1"
+                      :class="{ 'bg-orange-200': activeSticker === 'cat' }"
+                      alt=""
+                    />
+                  </li>
+                  <li class="px-4 py-2" @click="stickerOn('dog')">
+                    <img
+                      src="/public/dog/cc1.png"
+                      class="w-12 hover:scale-105 transition-all duration-300 cursor-pointer hover:bg-orange-200 rounded-full p-1"
+                      alt=""
+                      :class="{ 'bg-orange-200': activeSticker === 'dog' }"
+                    />
+                  </li>
+                  <li class="px-4 py-2" @click="stickerOn('tulip')">
+                    <img
+                      src="/public/tulip/cc1.png"
+                      class="w-12 hover:scale-105 transition-all duration-300 cursor-pointer hover:bg-orange-200 rounded-full p-1"
+                      alt=""
+                      :class="{ 'bg-orange-200': activeSticker === 'tulip' }"
+                    />
+                  </li>
+                  <li class="px-4 py-2" @click="stickerOn('berry')">
+                    <img
+                      src="/public/berry/cc1.png"
+                      class="w-12 hover:scale-105 transition-all duration-300 cursor-pointer hover:bg-orange-200 rounded-full p-1"
+                      alt=""
+                      :class="{ 'bg-orange-200': activeSticker === 'berry' }"
+                    />
+                  </li>
+                  <li class="px-4 py-2 flex items-center" @click="removeSticker">
+                    <font-awesome-icon
+                      icon="fa-solid fa-ban"
+                      class="p-2 hover:scale-105 transition-all duration-300 cursor-pointer hover:bg-orange-200 rounded-full"
+                      :class="{ 'bg-orange-200': !isStickerClicked }"
+                    />
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <button
+            @click="downloadCollage"
+            class="bg-orange-900 p-2 text-white ubuntu-bold rounded-xl shadow-xl cursor-pointer"
+          >
+            Download
+          </button>
+        </div>
+      </div>
+    </Modal>
+
+    <div class="flex flex-row gap-10 p-2 items-center">
+      <div
+        class="flex flex-col items-center max-h-3/4 w-1/4 gap-5 overflow-y-auto shadow-xl rounded-xl p-4"
+      >
+        <h2 class="text-3xl ubuntu-bold">Shots</h2>
+        <div
+          @click="setNumberOfResults(1)"
+          class="border-2 border-orange-700 hover:bg-orange-200 bg-white max-h-1/4 w-1/2 rounded-xl flex items-center justify- shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col gap-10 p-2"
+        >
+          <div class="w-full flex gap-2">
+            <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
+            <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
+            <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+          </div>
+          <h2 class="text-4xl ubuntu-bold flex-1">1</h2>
+        </div>
+        <div
+          @click="setNumberOfResults(2)"
+          class="border-2 border-orange-700 hover:bg-orange-200 bg-white h-1/4 w-1/2 rounded-xl flex items-center justify-between shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col gap-10 p-2"
+        >
+          <div class="w-full flex gap-2">
+            <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
+            <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
+            <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+          </div>
+          <h2 class="text-4xl ubuntu-bold flex-1">2</h2>
+        </div>
+        <div
+          @click="setNumberOfResults(3)"
+          class="border-2 border-orange-700 hover:bg-orange-200 bg-white h-1/4 w-1/2 rounded-xl flex items-center justify-between shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col gap-10 p-2"
+        >
+          <div class="w-full flex gap-2">
+            <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
+            <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
+            <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+          </div>
+          <h2 class="text-4xl ubuntu-bold flex-1">3</h2>
+        </div>
+        <div
+          @click="setNumberOfResults(4)"
+          class="bg-white h-1/4 w-1/2 rounded-xl flex items-center justify-center shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col gap-10 p-2 border-2 border-orange-700 hover:bg-orange-200"
+        >
+          <div class="w-full flex gap-2">
+            <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
+            <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
+            <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+          </div>
+          <h2 class="text-4xl ubuntu-bold flex-1">4</h2>
+        </div>
+        <div
+          @click="setNumberOfResults(5)"
+          class="bg-white h-1/4 w-1/2 rounded-xl flex items-center justify-center shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col gap-10 p-2 border-2 border-orange-700 hover:bg-orange-200"
+        >
+          <div class="w-full flex gap-2">
+            <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
+            <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
+            <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+          </div>
+          <h2 class="text-4xl ubuntu-bold flex-1">5</h2>
+        </div>
+      </div>
+      <div class="w-1/2 rounded-xl shadow-xl flex justify-center flex-col items-center p-2">
+        <h2 class="text-3xl ubuntu-bold">Camera</h2>
+        <div class="flex flex-col gap-2">
+          <!-- <button @click="stopCamera">Stop Camera</button> -->
+          <div class="p-2 gap-3 flex items-center">
+            <button
+              class="h-7 w-7 shadow-md hover:scale-125 bg-orange-300 transition-all duration-300 rounded-full border-none cursor-pointer"
+              @click="selectedFilter = 'none'"
+            >
+              <!-- Font Awesome Icon -->
+              <font-awesome-icon icon="fa-solid fa-ban" />
+            </button>
+            <button
+              class="h-7 w-7 shadow-md hover:scale-125 bg-orange-300 transition-all duration-300 rounded-full border-none cursor-pointer"
+              @click="selectedFilter = 'grayscale(100%) brightness(100%) blur(0.5px)'"
+            >
+              <!-- Font Awesome Icon -->
+              <font-awesome-icon icon="fa-solid fa-circle-half-stroke" />
+            </button>
+            <button
+              class="h-7 w-7 shadow-md hover:scale-125 bg-orange-300 transition-all duration-300 rounded-full border-none cursor-pointer"
+              @click="
+                selectedFilter =
+                  'sepia(80%)  brightness(100%) contrast(100%) saturate(70%) blur(1px)'
+              "
+            >
+              <!-- Font Awesome Icon -->
+              <font-awesome-icon icon="fa-solid fa-camera-retro" />
+            </button>
+            <button
+              class="h-7 w-7 shadow-md hover:scale-125 bg-orange-300 transition-all duration-300 rounded-full border-none cursor-pointer"
+              @click="selectedFilter = 'blur(3px) brightness(100%)'"
+            >
+              <!-- Font Awesome Icon -->
+              <font-awesome-icon icon="fa-solid fa-droplet" />
+            </button>
+            <button
+              class="h-7 w-7 shadow-md hover:scale-125 bg-orange-300 transition-all duration-300 rounded-full border-none cursor-pointer"
+              @click="selectedFilter = 'brightness(200%)'"
+            >
+              <font-awesome-icon icon="fa-solid fa-sun" />
+            </button>
+            <button
+              class="h-7 w-7 shadow-md hover:scale-125 bg-orange-300 transition-all duration-300 rounded-full border-none cursor-pointer"
+              @click="
+                selectedFilter =
+                  'blur(1px) saturate(100%) contrast(70%) brightness(100%) hue-rotate(10deg) '
+              "
+            >
+              <font-awesome-icon icon="fa-solid fa-film" />
+            </button>
+            <button
+              class="h-7 w-7 shadow-md hover:scale-125 bg-orange-300 transition-all duration-300 rounded-full border-none cursor-pointer"
+              @click="selectedFilter = 'invert(100%)'"
+            >
+              <font-awesome-icon icon="fa-solid fa-arrows-to-eye" />
+            </button>
+            <button
+              class="h-7 w-7 shadow-md hover:scale-125 bg-orange-300 transition-all duration-300 rounded-full border-none cursor-pointer"
+              @click="selectedFilter = 'saturate(120%) brightness(150%)'"
+            >
+              <font-awesome-icon icon="fa-solid fa-leaf" />
+            </button>
+            <button
+              class="h-7 w-7 shadow-md hover:scale-125 bg-orange-300 transition-all duration-300 rounded-full border-none cursor-pointer"
+              @click="
+                selectedFilter =
+                  ' hue-rotate(160deg) sepia(75%) contrast(130%) saturate(280%) hue-rotate(180deg)'
+              "
+            >
+              <font-awesome-icon icon="fa-solid fa-snowflake" />
+            </button>
+            <button
+              class="h-7 w-7 shadow-md hover:scale-125 bg-orange-300 transition-all duration-300 rounded-full border-none cursor-pointer"
+              @click="
+                selectedFilter =
+                  'sepia(50%) contrast(150%) saturate(200%) brightness(100%) hue-rotate(-15deg)'
+              "
+            >
+              <font-awesome-icon icon="fa-solid fa-fire" />
+            </button>
+          </div>
+          <div class="flex flex-col relative items-center bg-orange-900 p-2">
+            <video
+              class="rounded-md shadow-xl"
+              ref="video"
+              autoplay
+              playsinline
+              width="100%"
+              muted
+              :style="{ filter: selectedFilter }"
+            ></video>
+            <div
+              v-if="timerActive"
+              class="absolute flex items-center justify-center inset-0 bg-black/50"
+            >
+              <p class="text-white text-6xl font-semibold">{{ countdown }}</p>
+            </div>
+
+            <!-- <img src="/public/Smile.png" class="w-20 absolute bottom-14 left-2" /> -->
+            <button @click="startAutoCapture(numberOfResults)" class="button">
+              <font-awesome-icon icon="fa-solid fa-camera" class="text-xl text-white" />
+            </button>
+          </div>
+        </div>
+      </div>
+      <div
+        class="overflow-y-auto h-full border-2 border-orange-500 bg-orange-300 w-1/4 max-h-[75vh] rounded-xl shadow-xl flex flex-col gap-2 items-center p-2"
+      >
+        <h2 class="text-3xl ubuntu-bold">Display</h2>
+        <div
+          v-for="index in numberOfResults"
+          :key="index"
+          class="w-3/4 h-1/3 mx-auto bg-white shadow-xl rounded-xl"
+        >
+          <img
+            v-if="capturedImages[index - 1]"
+            :src="capturedImages[index - 1]"
+            alt="Captured Snapshot"
+            class="w-full h-full object-cover"
+            :style="{ filter: selectedFilter }"
+          />
+          <!-- You can also show the index or any other content if you like -->
+        </div>
+        <button
+          @click="openModal"
+          class="button p-2 w-20 text-white ubuntu-bold rounded-xl shadow-xl cursor-pointer"
+        >
+          View
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+video {
+  border: 1px solid #ccc;
+  max-width: 100%;
+  display: block;
+}
+button {
+  margin-top: 10px;
+}
+select {
+  margin-top: 10px;
+}
+
+/* From Uiverse.io by satyamchaudharydev */
+/* inspired from this svgbackgrounds.com/ */
+.button {
+  width: fit-content;
+  display: flex;
+  padding: 0.8em 1.1em;
+  gap: 0.4rem;
+  border: none;
+  font-weight: bold;
+  border-radius: 30px;
+  cursor: pointer;
+  text-shadow: 2px 2px 3px rgb(136 0 136 / 50%);
+  background: linear-gradient(
+      15deg,
+      #521504,
+      #953c05,
+      #bc5709,
+      #de6f3d,
+      #f09f33,
+      #de6f3d,
+      #bc5709,
+      #953c05,
+      #521504
+    )
+    no-repeat;
+  background-size: 300%;
+  background-position: left center;
+  transition: background 0.3s ease;
+  color: #fff;
+}
+
+.button:hover {
+  background-size: 320%;
+  background-position: right center;
+}
+
+.button:hover svg {
+  fill: #fff;
+}
+
+.button svg {
+  width: 23px;
+  fill: #f09f33;
+  transition: 0.3s ease;
+}
+
+/* From Uiverse.io by Yaya12085 */
+.radio-inputs {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  border-radius: 0.5rem;
+  background-color: #ffeed0;
+  box-sizing: border-box;
+  box-shadow: 0 0 0px 1px rgba(0, 0, 0, 0.06);
+  padding: 0.25rem;
+  width: 200px;
+  font-size: 14px;
+}
+
+.radio-inputs .radio {
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+.radio-inputs .radio input {
+  display: none;
+}
+
+.radio-inputs .radio .name {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: none;
+  padding: 0.5rem 0;
+  color: rgba(51, 65, 85, 1);
+  transition: all 0.15s ease-in-out;
+}
+
+.radio-inputs .radio input:checked + .name {
+  background-color: #fff;
+  font-weight: 600;
+}
+</style>
