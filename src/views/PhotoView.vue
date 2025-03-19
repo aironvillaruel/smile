@@ -23,6 +23,7 @@ export default {
       isMirrored: true,
       isDropdownVisible: false,
       isStickerClicked: false,
+      isStickerClickedCol: false,
       imageFolder: "",
       activeSticker: null,
     };
@@ -109,6 +110,8 @@ export default {
       }
 
       // Reset countdown to 5 after capture
+      console.log(this.capturedImages.length < this.numberOfResults);
+      
       this.countdown = 5; // Reset the countdown for next capture
     },
 
@@ -216,6 +219,7 @@ export default {
           width - borderThickness, // Reduce the width to account for the border
           height - borderThickness // Reduce the height to account for the border
         );
+        ctx.filter = 'none';
       };
 
       // Helper function to create and load an image, then call a callback when it's loaded
@@ -395,6 +399,79 @@ export default {
                   }
                 });
               });
+            } else if (this.isStickerClickedCol) {
+              const stickers = [
+                {
+                  src: `${this.imageFolder}/cc1.png`,
+                  x: collageWidth * 0.02,
+                  y: collageHeight - 140,
+                  width: 200,
+                  height: 200,
+                },
+                {
+                  src: `${this.imageFolder}/cc6.png`,
+                  x: collageWidth - 600,
+                  y: collageHeight * 0.02,
+                  width: 200,
+                  height: 200,
+                },
+                {
+                  src: `${this.imageFolder}/cc3.png`,
+                  x: collageWidth - 250,
+                  y: collageHeight - 150,
+                  width: 200,
+                  height: 200,
+                },
+                {
+                  src: `${this.imageFolder}/cc4.png`,
+                  x: collageWidth * 0.5,
+                  y: collageHeight * 0.01,
+                  width: 200,
+                  height: 200,
+                },
+                {
+                  src: `${this.imageFolder}/cc5.png`,
+                  x: collageWidth * 0.1,
+                  y: collageHeight * 0.01,
+                  width: 200,
+                  height: 200,
+                },
+                {
+                  src: `${this.imageFolder}/cc2.png`,
+                  x: collageWidth * 0.6,
+                  y: collageHeight - 150,
+                  width: 200,
+                  height: 200,
+                },
+              ];
+
+              // Loading each sticker and drawing after images are drawn
+              stickers.forEach((sticker) => {
+                loadImage(sticker.src, (stickerImage) => {
+                  // Scale down the sticker image if it's too large
+                  console.log(`Drawing sticker at x: ${sticker.src}`);
+
+                  const stickerWidth = Math.min(sticker.width, stickerImage.width);
+                  const stickerHeight = Math.min(sticker.height, stickerImage.height);
+
+                  // Debugging sticker positions and sizes
+                  console.log(`Drawing sticker at x: ${sticker.x}, y: ${sticker.y}`);
+                  console.log("Sticker Image Dimensions:", stickerImage.width, stickerImage.height);
+
+                  // Draw sticker AFTER images are drawn, ensuring it's in front
+                  ctx.drawImage(stickerImage, sticker.x, sticker.y, stickerWidth, stickerHeight);
+                  stickersLoaded++; // Increment the loaded stickers count
+
+                  // Check if all stickers are loaded
+                  if (stickersLoaded === stickers.length) {
+                    // Trigger the download after adding stickers
+                    const link = document.createElement("a");
+                    link.download = "smile.png";
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+                  }
+                });
+              });
             } else {
               // If no stickers are clicked, trigger the download immediately
               const link = document.createElement("a");
@@ -409,26 +486,43 @@ export default {
 
     stickerOn(value) {
       if (value === "cat") {
-        this.isStickerClicked = true; // Toggle visibility
+        if (this.selectedOrientation === "flex-row") {
+          this.isStickerClicked = true; // Toggle visibility
+        } else {
+          this.isStickerClickedCol = true; // Toggle visibility
+        }
         this.activeSticker = "cat";
         this.imageFolder = "/public/catcouple"; // Set image folder to cat
       } else if (value === "dog") {
         this.activeSticker = "dog";
-        this.isStickerClicked = true; // Toggle visibility
+        if (this.selectedOrientation === "flex-row") {
+          this.isStickerClicked = true; // Toggle visibility
+        } else {
+          this.isStickerClickedCol = true; // Toggle visibility
+        }
         this.imageFolder = "/public/dog"; // Set image folder to dog
       } else if (value === "tulip") {
         this.activeSticker = "tulip";
-        this.isStickerClicked = true; // Toggle visibility
+        if (this.selectedOrientation === "flex-row") {
+          this.isStickerClicked = true; // Toggle visibility
+        } else {
+          this.isStickerClickedCol = true; // Toggle visibility
+        }
         this.imageFolder = "/public/tulip"; // Set image folder to dog
       } else if (value === "berry") {
         this.activeSticker = "berry";
-        this.isStickerClicked = true; // Toggle visibility
+        if (this.selectedOrientation === "flex-row") {
+          this.isStickerClicked = true; // Toggle visibility
+        } else {
+          this.isStickerClickedCol = true; // Toggle visibility
+        }
         this.imageFolder = "/public/berry"; // Set image folder to dog
       }
     },
 
     removeSticker() {
       this.isStickerClicked = false; // Hide the images
+      this.isStickerClickedCol = false; // Hide the images
       this.activeSticker = null; // Reset the active sticker
     },
   },
@@ -566,6 +660,22 @@ export default {
             <img :src="`${imageFolder}/cc5.png`" class="w-10 top-0 absolute left-20" alt="" />
             <img :src="`${imageFolder}/cc6.png`" class="w-10 top-0 absolute right-40" alt="" />
           </div>
+          <div v-if="isStickerClickedCol" class="z-20 absolute w-full h-full">
+            <img
+              :src="`${imageFolder}/cc1.png`"
+              class="w-10 -bottom-[200%] absolute left-0"
+              alt=""
+            />
+            <img
+              :src="`${imageFolder}/cc3.png`"
+              class="w-10 -bottom-[100%] absolute right-0"
+              alt=""
+            />
+            <img :src="`${imageFolder}/cc4.png`" class="w-10 top-96 absolute right-5" alt="" />
+            <img :src="`${imageFolder}/cc2.png`" class="w-10 -bottom-40 absolute right-72" alt="" />
+            <img :src="`${imageFolder}/cc5.png`" class="w-10 top-0 absolute left-0" alt="" />
+            <img :src="`${imageFolder}/cc6.png`" class="w-10 top-0 absolute right-10" alt="" />
+          </div>
           <div
             v-for="index in numberOfResults"
             :key="index"
@@ -628,7 +738,7 @@ export default {
                     <font-awesome-icon
                       icon="fa-solid fa-ban"
                       class="p-2 hover:scale-105 transition-all duration-300 cursor-pointer hover:bg-orange-200 rounded-full"
-                      :class="{ 'bg-orange-200': !isStickerClicked }"
+                      :class="{ 'bg-orange-200': !isStickerClicked && !isStickerClickedCol }"
                     />
                   </li>
                 </ul>
@@ -802,7 +912,21 @@ export default {
               v-if="timerActive"
               class="absolute flex items-center justify-center inset-0 bg-black/50"
             >
-              <p class="text-white text-6xl font-semibold">{{ countdown }}</p>
+              <p class="text-white text-6xl font-semibold">
+                <span
+                  class="bg-white/10 p-10 ubuntu-bold rounded-full w-80 h-80 flex items-center justify-center text-white flash"
+                >
+                  <span
+                    class="bg-white/30 p-10 ubuntu-bold rounded-full w-60 h-60 flex items-center justify-center text-white flash "
+                  >
+                    <span
+                      class="bg-white/40 p-10 ubuntu-bold rounded-full w-40 h-40 flex items-center justify-center text-white flash"
+                    >
+                      {{ countdown }}
+                    </span>
+                  </span>
+                </span>
+              </p>
             </div>
 
             <!-- <img src="/public/Smile.png" class="w-20 absolute bottom-14 left-2" /> -->
@@ -938,5 +1062,20 @@ select {
 .radio-inputs .radio input:checked + .name {
   background-color: #fff;
   font-weight: 600;
+}
+@keyframes flash {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.flash {
+  animation: flash 1s infinite;
 }
 </style>
