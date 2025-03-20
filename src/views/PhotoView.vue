@@ -494,7 +494,6 @@ export default {
           //   link.href = canvas.toDataURL("image/png");
           //   link.click();
           // }
-          // Once all images are loaded, trigger the download
           if (imagesLoaded === totalImages) {
             const link = document.createElement("a");
             link.download = "smile.png";
@@ -506,6 +505,8 @@ export default {
     },
 
     stickerOn(value) {
+      console.log(this.selectedOrientation); // Use 'this' to access the property
+
       if (value === "cat") {
         if (this.selectedOrientation === "flex-row") {
           this.isStickerClicked = true; // Toggle visibility
@@ -513,7 +514,7 @@ export default {
           this.isStickerClickedCol = true; // Toggle visibility
         }
         this.activeSticker = "cat";
-        this.imageFolder = "/public/catcouple"; // Set image folder to cat
+        this.imageFolder = "/catcouple"; // Set image folder to cat
       } else if (value === "dog") {
         this.activeSticker = "dog";
         if (this.selectedOrientation === "flex-row") {
@@ -521,7 +522,7 @@ export default {
         } else {
           this.isStickerClickedCol = true; // Toggle visibility
         }
-        this.imageFolder = "/public/dog"; // Set image folder to dog
+        this.imageFolder = "/dog"; // Set image folder to dog
       } else if (value === "tulip") {
         this.activeSticker = "tulip";
         if (this.selectedOrientation === "flex-row") {
@@ -529,7 +530,7 @@ export default {
         } else {
           this.isStickerClickedCol = true; // Toggle visibility
         }
-        this.imageFolder = "/public/tulip"; // Set image folder to dog
+        this.imageFolder = "/tulip"; // Set image folder to tulip
       } else if (value === "berry") {
         this.activeSticker = "berry";
         if (this.selectedOrientation === "flex-row") {
@@ -537,7 +538,7 @@ export default {
         } else {
           this.isStickerClickedCol = true; // Toggle visibility
         }
-        this.imageFolder = "/public/berry"; // Set image folder to dog
+        this.imageFolder = "/berry"; // Set image folder to berry
       }
     },
 
@@ -986,7 +987,7 @@ export default {
           <div
             v-for="index in numberOfResults"
             :key="index"
-            class="md:w-3/4 w-20 md:p-0 p-4 h-full md:h-3/4 md:mx-auto bg-white shadow-xl rounded-xl"
+            class="md:w-3/4 w-20 md:p-0 p-4 h-full md:h-1/3 mx-auto bg-white shadow-xl rounded-xl gap-2"
           >
             <!-- f -->
             <img
