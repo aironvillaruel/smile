@@ -206,22 +206,35 @@ export default {
         ctx,
         filter
       ) => {
-        // Draw the border first (without the filter)
+        // Calculate the aspect ratio of the image
+        const aspectRatio = image.width / image.height;
+
+        // Adjust the width and height to maintain the aspect ratio
+        let adjustedWidth = width - borderThickness;
+        let adjustedHeight = height - borderThickness;
+
+        if (adjustedWidth / adjustedHeight > aspectRatio) {
+          adjustedWidth = adjustedHeight * aspectRatio;
+        } else {
+          adjustedHeight = adjustedWidth / aspectRatio;
+        }
+
+        // Center the image within the border
+        const offsetX = (width - adjustedWidth) / 2;
+        const offsetY = (height - adjustedHeight) / 2;
+
+        // Draw the border
         ctx.lineWidth = borderThickness;
         ctx.strokeStyle = borderColor;
-        ctx.strokeRect(x, y, width, height); // Draw the border (around the image)
+        ctx.strokeRect(x, y, width, height);
 
         // Apply the selected filter only to the image
         ctx.filter = filter;
 
         // Draw the image inside the border
-        ctx.drawImage(
-          image,
-          x + borderThickness / 2, // Adjust to ensure the image fits within the border
-          y + borderThickness / 2, // Adjust to ensure the image fits within the border
-          width - borderThickness, // Reduce the width to account for the border
-          height - borderThickness // Reduce the height to account for the border
-        );
+        ctx.drawImage(image, x + offsetX, y + offsetY, adjustedWidth, adjustedHeight);
+
+        // Reset the filter
         ctx.filter = "none";
       };
 
@@ -557,7 +570,9 @@ export default {
           <h2 class="text-2xl font-semibold text-zinc-900 dark:text-white ubuntu-bold">Preview</h2>
         </div>
 
-        <div class="w-full flex flex-col md:flex-row md:justify-between items-center p-1 border-b border-gray-300">
+        <div
+          class="w-full flex flex-col md:flex-row md:justify-between items-center p-1 border-b border-gray-300"
+        >
           <div class="md:w-1/3 w-full">
             <label class="ubuntu-bold text-sm md:text:md">Border:</label>
             <div class="p-2 gap-3 flex md:flex-wrap">
@@ -958,17 +973,17 @@ export default {
           </div>
         </div>
       </div>
-      <div class="w-full md:w-1/4 h-3/4 p-5 md:h-3/4 flex flex-col items-center">
+      <div class="w-full md:w-1/4 h-3/4 p-5 flex flex-col items-center">
         <h2 class="text-xl md:text-3xl ubuntu-bold">Display</h2>
         <div
-          class="overflow-x-auto md:overflow-y-auto h-full border-2 border-orange-500 bg-orange-300 w-full  rounded-xl shadow-xl flex md:flex-col gap-2 items-center p-2 flex-row"
+          class="overflow-x-auto md:overflow-y-auto h-full border-2 border-orange-500 bg-orange-300 w-full rounded-xl shadow-xl flex md:flex-col gap-2 items-center p-2 flex-row"
         >
           <div
             v-for="index in numberOfResults"
             :key="index"
-            class="md:w-3/4 w-20 md:p-0 p-4  h-full md:h-3/4 md:mx-auto bg-white shadow-xl rounded-xl"
+            class="md:w-3/4 w-20 md:p-0 p-4 h-full md:h-3/4 md:mx-auto bg-white shadow-xl rounded-xl"
           >
-          <!-- f -->
+            <!-- f -->
             <img
               v-if="capturedImages[index - 1]"
               :src="capturedImages[index - 1]"
@@ -991,6 +1006,11 @@ export default {
 </template>
 
 <style scoped>
+img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain; /* Ensures the image fits within its container without stretching */
+}
 video {
   border: 1px solid #ccc;
   max-width: 100%;
