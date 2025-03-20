@@ -213,21 +213,14 @@ export default {
 
         // Apply the selected filter only to the image
         ctx.filter = filter;
-        let imageAspectRatio = image.width / image.height;
-        let newWidth = width - borderThickness;
-        let newHeight = newWidth / imageAspectRatio; // Maintain aspect ratio
 
-        if (newHeight > height - borderThickness) {
-          newHeight = height - borderThickness;
-          newWidth = newHeight * imageAspectRatio; // Adjust width to maintain aspect ratio
-        }
         // Draw the image inside the border
         ctx.drawImage(
           image,
           x + borderThickness / 2, // Adjust to ensure the image fits within the border
           y + borderThickness / 2, // Adjust to ensure the image fits within the border
-          newWidth,
-          newHeight
+          width - borderThickness, // Reduce the width to account for the border
+          height - borderThickness // Reduce the height to account for the border
         );
         ctx.filter = "none";
       };
@@ -564,9 +557,7 @@ export default {
           <h2 class="text-2xl font-semibold text-zinc-900 dark:text-white ubuntu-bold">Preview</h2>
         </div>
 
-        <div
-          class="w-full flex flex-col md:flex-row md:justify-between items-center p-1 border-b border-gray-300"
-        >
+        <div class="w-full flex flex-col md:flex-row md:justify-between items-center p-1 border-b border-gray-300">
           <div class="md:w-1/3 w-full">
             <label class="ubuntu-bold text-sm md:text:md">Border:</label>
             <div class="p-2 gap-3 flex md:flex-wrap">
@@ -970,14 +961,14 @@ export default {
       <div class="w-full md:w-1/4 h-3/4 p-5 md:h-3/4 flex flex-col items-center">
         <h2 class="text-xl md:text-3xl ubuntu-bold">Display</h2>
         <div
-          class="overflow-x-auto md:overflow-y-auto h-full border-2 border-orange-500 bg-orange-300 w-full rounded-xl shadow-xl flex md:flex-col gap-2 items-center p-2 flex-row"
+          class="overflow-x-auto md:overflow-y-auto h-full border-2 border-orange-500 bg-orange-300 w-full  rounded-xl shadow-xl flex md:flex-col gap-2 items-center p-2 flex-row"
         >
           <div
             v-for="index in numberOfResults"
             :key="index"
-            class="md:w-3/4 w-20 md:p-0 p-4 h-full md:h-3/4 md:mx-auto bg-white shadow-xl rounded-xl"
+            class="md:w-3/4 w-20 md:p-0 p-4  h-full md:h-3/4 md:mx-auto bg-white shadow-xl rounded-xl"
           >
-            <!-- f -->
+          <!-- f -->
             <img
               v-if="capturedImages[index - 1]"
               :src="capturedImages[index - 1]"
