@@ -557,10 +557,10 @@ export default {
           <h2 class="text-2xl font-semibold text-zinc-900 dark:text-white ubuntu-bold">Preview</h2>
         </div>
 
-        <div class="w-full flex justify-between items-center p-1 border-b border-gray-300">
-          <div class="w-1/3">
-            <label class="ubuntu-bold">Border:</label>
-            <div class="p-2 gap-3 flex flex-wrap">
+        <div class="w-full flex flex-col md:flex-row md:justify-between items-center p-1 border-b border-gray-300">
+          <div class="md:w-1/3 w-full">
+            <label class="ubuntu-bold text-sm md:text:md">Border:</label>
+            <div class="p-2 gap-3 flex md:flex-wrap">
               <input
                 type="button"
                 :style="{ backgroundColor: '#f87171' }"
@@ -625,8 +625,8 @@ export default {
           </div>
 
           <!-- From Uiverse.io by Yaya12085 -->
-          <div class="w-1/3">
-            <label class="ubuntu-bold">Orientation:</label>
+          <div class="md:w-1/3 w-full">
+            <label class="ubuntu-bold text-sm md:text:md">Orientation:</label>
 
             <div class="radio-inputs">
               <label class="radio">
