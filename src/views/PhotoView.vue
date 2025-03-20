@@ -24,7 +24,7 @@ export default {
       isDropdownVisible: false,
       isStickerClicked: false,
       isStickerClickedCol: false,
-      imageFolder: "/public/catcouple",
+      imageFolder: "",
       activeSticker: null,
       processedImage: false,
     };
@@ -341,160 +341,166 @@ export default {
           );
 
           imagesLoaded++;
-          if (this.isStickerClicked) {
-            const stickers = [
-              {
-                src: `${this.imageFolder}/cc1.png`,
-                x: collageWidth * 0.02,
-                y: collageHeight - 150,
-                width: 200,
-                height: 200,
-              },
-              {
-                src: `${this.imageFolder}/cc6.png`,
-                x: collageWidth - 600,
-                y: collageHeight * 0.02,
-                width: 200,
-                height: 200,
-              },
-              {
-                src: `${this.imageFolder}/cc3.png`,
-                x: collageWidth - 250,
-                y: collageHeight - 150,
-                width: 200,
-                height: 200,
-              },
-              {
-                src: `${this.imageFolder}/cc4.png`,
-                x: collageWidth * 0.5,
-                y: collageHeight * 0.01,
-                width: 200,
-                height: 200,
-              },
-              {
-                src: `${this.imageFolder}/cc5.png`,
-                x: collageWidth * 0.1,
-                y: collageHeight * 0.01,
-                width: 200,
-                height: 200,
-              },
-              {
-                src: `${this.imageFolder}/cc2.png`,
-                x: collageWidth * 0.6,
-                y: collageHeight - 150,
-                width: 200,
-                height: 200,
-              },
-            ];
+          // if (this.isStickerClicked) {
+          //   const stickers = [
+          //     {
+          //       src: `${this.imageFolder}/cc1.png`,
+          //       x: collageWidth * 0.02,
+          //       y: collageHeight - 150,
+          //       width: 200,
+          //       height: 200,
+          //     },
+          //     {
+          //       src: `${this.imageFolder}/cc6.png`,
+          //       x: collageWidth - 600,
+          //       y: collageHeight * 0.02,
+          //       width: 200,
+          //       height: 200,
+          //     },
+          //     {
+          //       src: `${this.imageFolder}/cc3.png`,
+          //       x: collageWidth - 250,
+          //       y: collageHeight - 150,
+          //       width: 200,
+          //       height: 200,
+          //     },
+          //     {
+          //       src: `${this.imageFolder}/cc4.png`,
+          //       x: collageWidth * 0.5,
+          //       y: collageHeight * 0.01,
+          //       width: 200,
+          //       height: 200,
+          //     },
+          //     {
+          //       src: `${this.imageFolder}/cc5.png`,
+          //       x: collageWidth * 0.1,
+          //       y: collageHeight * 0.01,
+          //       width: 200,
+          //       height: 200,
+          //     },
+          //     {
+          //       src: `${this.imageFolder}/cc2.png`,
+          //       x: collageWidth * 0.6,
+          //       y: collageHeight - 150,
+          //       width: 200,
+          //       height: 200,
+          //     },
+          //   ];
 
-            // Loading each sticker and drawing after images are drawn
-            stickers.forEach((sticker) => {
-              loadImage(sticker.src, (stickerImage) => {
-                // Scale down the sticker image if it's too large
-                console.log(`Drawing sticker at x: ${sticker.src}`);
+          //   // Loading each sticker and drawing after images are drawn
+          //   stickers.forEach((sticker) => {
+          //     loadImage(sticker.src, (stickerImage) => {
+          //       // Scale down the sticker image if it's too large
+          //       console.log(`Drawing sticker at x: ${sticker.src}`);
 
-                const stickerWidth = Math.min(sticker.width, stickerImage.width);
-                const stickerHeight = Math.min(sticker.height, stickerImage.height);
+          //       const stickerWidth = Math.min(sticker.width, stickerImage.width);
+          //       const stickerHeight = Math.min(sticker.height, stickerImage.height);
 
-                // Debugging sticker positions and sizes
-                console.log(`Drawing sticker at x: ${sticker.x}, y: ${sticker.y}`);
-                console.log("Sticker Image Dimensions:", stickerImage.width, stickerImage.height);
+          //       // Debugging sticker positions and sizes
+          //       console.log(`Drawing sticker at x: ${sticker.x}, y: ${sticker.y}`);
+          //       console.log("Sticker Image Dimensions:", stickerImage.width, stickerImage.height);
 
-                // Draw sticker AFTER images are drawn, ensuring it's in front
-                ctx.drawImage(stickerImage, sticker.x, sticker.y, stickerWidth, stickerHeight);
-                stickersLoaded++; // Increment the loaded stickers count
+          //       // Draw sticker AFTER images are drawn, ensuring it's in front
+          //       ctx.drawImage(stickerImage, sticker.x, sticker.y, stickerWidth, stickerHeight);
+          //       stickersLoaded++; // Increment the loaded stickers count
 
-                // Check if all stickers are loaded
-                if (stickersLoaded === stickers.length) {
-                  // Trigger the download after adding stickers
-                  const link = document.createElement("a");
-                  link.download = "smile.png";
-                  link.href = canvas.toDataURL("image/png");
-                  link.click();
-                }
-              });
-            });
-          } else if (this.isStickerClickedCol) {
-            const stickers = [
-              {
-                src: `${this.imageFolder}/cc1.png`,
-                x: collageWidth * 0.02,
-                y: collageHeight - 140,
-                width: 200,
-                height: 200,
-              },
-              {
-                src: `${this.imageFolder}/cc6.png`,
-                x: collageWidth - 600,
-                y: collageHeight * 0.02,
-                width: 200,
-                height: 200,
-              },
-              {
-                src: `${this.imageFolder}/cc3.png`,
-                x: collageWidth - 250,
-                y: collageHeight - 150,
-                width: 200,
-                height: 200,
-              },
-              {
-                src: `${this.imageFolder}/cc4.png`,
-                x: collageWidth * 0.5,
-                y: collageHeight * 0.01,
-                width: 200,
-                height: 200,
-              },
-              {
-                src: `${this.imageFolder}/cc5.png`,
-                x: collageWidth * 0.1,
-                y: collageHeight * 0.01,
-                width: 200,
-                height: 200,
-              },
-              {
-                src: `${this.imageFolder}/cc2.png`,
-                x: collageWidth * 0.6,
-                y: collageHeight - 150,
-                width: 200,
-                height: 200,
-              },
-            ];
+          //       // Check if all stickers are loaded
+          //       if (stickersLoaded === stickers.length) {
+          //         // Trigger the download after adding stickers
+          //         const link = document.createElement("a");
+          //         link.download = "smile.png";
+          //         link.href = canvas.toDataURL("image/png");
+          //         link.click();
+          //       }
+          //     });
+          //   });
+          // } else if (this.isStickerClickedCol) {
+          //   const stickers = [
+          //     {
+          //       src: `${this.imageFolder}/cc1.png`,
+          //       x: collageWidth * 0.02,
+          //       y: collageHeight - 140,
+          //       width: 200,
+          //       height: 200,
+          //     },
+          //     {
+          //       src: `${this.imageFolder}/cc6.png`,
+          //       x: collageWidth - 600,
+          //       y: collageHeight * 0.02,
+          //       width: 200,
+          //       height: 200,
+          //     },
+          //     {
+          //       src: `${this.imageFolder}/cc3.png`,
+          //       x: collageWidth - 250,
+          //       y: collageHeight - 150,
+          //       width: 200,
+          //       height: 200,
+          //     },
+          //     {
+          //       src: `${this.imageFolder}/cc4.png`,
+          //       x: collageWidth * 0.5,
+          //       y: collageHeight * 0.01,
+          //       width: 200,
+          //       height: 200,
+          //     },
+          //     {
+          //       src: `${this.imageFolder}/cc5.png`,
+          //       x: collageWidth * 0.1,
+          //       y: collageHeight * 0.01,
+          //       width: 200,
+          //       height: 200,
+          //     },
+          //     {
+          //       src: `${this.imageFolder}/cc2.png`,
+          //       x: collageWidth * 0.6,
+          //       y: collageHeight - 150,
+          //       width: 200,
+          //       height: 200,
+          //     },
+          //   ];
 
-            // Loading each sticker and drawing after images are drawn
-            stickers.forEach((sticker) => {
-              loadImage(sticker.src, (stickerImage) => {
-                // Scale down the sticker image if it's too large
-                console.log(`Drawing sticker at x: ${sticker.src}`);
+          //   // Loading each sticker and drawing after images are drawn
+          //   stickers.forEach((sticker) => {
+          //     loadImage(sticker.src, (stickerImage) => {
+          //       // Scale down the sticker image if it's too large
+          //       console.log(`Drawing sticker at x: ${sticker.src}`);
 
-                const stickerWidth = Math.min(sticker.width, stickerImage.width);
-                const stickerHeight = Math.min(sticker.height, stickerImage.height);
+          //       const stickerWidth = Math.min(sticker.width, stickerImage.width);
+          //       const stickerHeight = Math.min(sticker.height, stickerImage.height);
 
-                // Debugging sticker positions and sizes
-                console.log(`Drawing sticker at x: ${sticker.x}, y: ${sticker.y}`);
-                console.log("Sticker Image Dimensions:", stickerImage.width, stickerImage.height);
+          //       // Debugging sticker positions and sizes
+          //       console.log(`Drawing sticker at x: ${sticker.x}, y: ${sticker.y}`);
+          //       console.log("Sticker Image Dimensions:", stickerImage.width, stickerImage.height);
 
-                // Draw sticker AFTER images are drawn, ensuring it's in front
-                ctx.drawImage(stickerImage, sticker.x, sticker.y, stickerWidth, stickerHeight);
-                stickersLoaded++; // Increment the loaded stickers count
+          //       // Draw sticker AFTER images are drawn, ensuring it's in front
+          //       ctx.drawImage(stickerImage, sticker.x, sticker.y, stickerWidth, stickerHeight);
+          //       stickersLoaded++; // Increment the loaded stickers count
 
-                // Check if all stickers are loaded
-                if (stickersLoaded === stickers.length) {
-                  // Trigger the download after adding stickers
-                  const link = document.createElement("a");
-                  link.download = "smile.png";
-                  link.href = canvas.toDataURL("image/png");
-                  link.click();
-                }
-              });
-            });
-          } else {
-            // If no stickers are clicked, trigger the download immediately
+          //       // Check if all stickers are loaded
+          //       if (stickersLoaded === stickers.length) {
+          //         // Trigger the download after adding stickers
+          //         const link = document.createElement("a");
+          //         link.download = "smile.png";
+          //         link.href = canvas.toDataURL("image/png");
+          //         link.click();
+          //       }
+          //     });
+          //   });
+          // } else {
+          //   // If no stickers are clicked, trigger the download immediately
+          //   const link = document.createElement("a");
+          //   link.download = "smile.png";
+          //   link.href = canvas.toDataURL("image/png");
+          //   link.click();
+          // }
+          // Once all images are loaded, trigger the download
+          if (imagesLoaded === totalImages) {
             const link = document.createElement("a");
             link.download = "smile.png";
             link.href = canvas.toDataURL("image/png");
             link.click();
           }
-          // Once all images are loaded, trigger the download
         });
       });
     },
