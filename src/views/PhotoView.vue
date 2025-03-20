@@ -238,11 +238,10 @@ export default {
       // Canvas setup
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
-      const deviceWidth = window.innerWidth; // or use camera resolution if available
-      const deviceHeight = window.innerHeight
+
       // Image properties
-      const imageWidth = deviceWidth; // Width of each image
-      const imageHeight = deviceHeight; // Height of each image
+      const imageWidth = 1600; // Width of each image
+      const imageHeight = 1200; // Height of each image
       const borderThickness = 200; // Set border thickness to 200px
 
       // Assign borderColor based on selectedColor (using conditional logic)
