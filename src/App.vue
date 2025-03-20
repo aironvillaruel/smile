@@ -1,12 +1,16 @@
 <script setup>
 import { RouterLink, RouterView } from "vue-router";
 import HelloWorld from "./components/HelloWorld.vue";
+
+
 </script>
 
 <template>
   <div class="h-screen flex flex-col">
-    <header class="bg-orange-300 shadow-xl border border-zinc-400 p-2 flex items-center flex-row">
-      <RouterLink to="/"> <img src="/public/smile.png" class="w-20" /></RouterLink>
+    <header class="bg-orange-300 shadow-xl border border-zinc-400 p-2 flex items-center justify-between flex-row">
+      <RouterLink to="/"> <img src="/public/smile.png" class="w-20 " /></RouterLink>
+
+      <p class="ubuntu-bold">Version 1.0.1 - Smile</p>
 
       <!-- <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
 
@@ -22,6 +26,7 @@ import HelloWorld from "./components/HelloWorld.vue";
 
     <RouterView />
   </div>
+  
 </template>
 
 <style scoped>

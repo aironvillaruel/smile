@@ -641,7 +641,7 @@ export default {
           </div>
         </div>
         <div class="w-full justify-between flex items-center">
-          <div class="flex justify-center">
+          <!-- <div class="flex justify-center">
             <div class="">
               <button @click="toggleDropdown" class="px-4 py-1 bg-orange-900 text-white rounded">
                 Stickers
@@ -690,7 +690,7 @@ export default {
                 </ul>
               </div>
             </div>
-          </div>
+          </div> -->
           <button
             @click="downloadCollage"
             class="bg-orange-900 p-2 text-white ubuntu-bold rounded-xl shadow-xl cursor-pointer"
@@ -884,7 +884,7 @@ export default {
               v-if="processedImage"
               class="absolute flex items-center justify-center inset-0 bg-black/90"
             >
-              <p class="text-white text-4xl font-semibold ubuntu-bold">Please wait cutie!!</p>
+              <p class="text-white text-4xl font-semibold ubuntu-bold">Please wait...</p>
             </div>
             <!-- <img src="/public/Smile.png" class="w-20 absolute bottom-14 left-2" /> -->
             <button @click="startAutoCapture(numberOfResults)" class="button">
