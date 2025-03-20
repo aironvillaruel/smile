@@ -10,7 +10,7 @@ import HelloWorld from "./components/HelloWorld.vue";
     <header class="bg-orange-300 shadow-xl border border-zinc-400 p-2 flex items-center justify-between flex-row">
       <RouterLink to="/"> <img src="/public/smile.png" class="w-20 " /></RouterLink>
 
-      <p class="ubuntu-bold">Version 1.0.1 - Smile</p>
+      <p class="ubuntu-bold">Version 1.0.2 - Smile</p>
 
       <!-- <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
 
