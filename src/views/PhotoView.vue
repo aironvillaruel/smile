@@ -206,10 +206,7 @@ export default {
         ctx,
         filter
       ) => {
-        // Calculate the aspect ratio of the image
         const aspectRatio = image.width / image.height;
-
-        // Adjust the width and height to maintain the aspect ratio
         let adjustedWidth = width - borderThickness;
         let adjustedHeight = height - borderThickness;
 
@@ -219,22 +216,15 @@ export default {
           adjustedHeight = adjustedWidth / aspectRatio;
         }
 
-        // Center the image within the border
         const offsetX = (width - adjustedWidth) / 2;
         const offsetY = (height - adjustedHeight) / 2;
 
-        // Draw the border
         ctx.lineWidth = borderThickness;
         ctx.strokeStyle = borderColor;
         ctx.strokeRect(x, y, width, height);
 
-        // Apply the selected filter only to the image
         ctx.filter = filter;
-
-        // Draw the image inside the border
         ctx.drawImage(image, x + offsetX, y + offsetY, adjustedWidth, adjustedHeight);
-
-        // Reset the filter
         ctx.filter = "none";
       };
 
@@ -257,251 +247,175 @@ export default {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
-      // Image properties
-      const imageWidth = videoWidth; // Use the video width
-      const imageHeight = videoHeight; // Use the video height
-      const borderThickness = 50; // Set border thickness (adjust as needed)
+      const imageWidth = videoWidth;
+      const imageHeight = videoHeight;
+      const borderThickness = 100;
 
-      // Assign borderColor based on selectedColor (using conditional logic)
       let borderColor;
-      if (this.selectedColor === "bg-rose-400") {
-        borderColor = "#fb7185";
-      } else if (this.selectedColor === "bg-red-400") {
-        borderColor = "#f87171";
-      } else if (this.selectedColor === "bg-pink-400") {
-        borderColor = "#f472b6";
-      } else if (this.selectedColor === "bg-blue-400") {
-        borderColor = "#60a5fa";
-      } else if (this.selectedColor === "bg-green-400") {
-        borderColor = "#4ade80";
-      } else if (this.selectedColor === "bg-yellow-400") {
-        borderColor = "#fbbf24";
-      } else if (this.selectedColor === "bg-amber-400") {
-        borderColor = "#f59e0b";
-      } else if (this.selectedColor === "bg-cyan-400") {
-        borderColor = "#22d3ee";
-      } else if (this.selectedColor === "bg-fuchsia-400") {
-        borderColor = "#d946ef";
-      } else if (this.selectedColor === "bg-purple-400") {
-        borderColor = "#9f7aea";
-      } else if (this.selectedColor === "bg-orange-400") {
-        borderColor = "#fb923c";
-      } else {
-        // Default to a safe color if none of the conditions match
-        borderColor = "#fb7185"; // Default to "rose" color
+      // Assign borderColor based on selectedColor
+      switch (this.selectedColor) {
+        case "bg-rose-400":
+          borderColor = "#fb7185";
+          break;
+        case "bg-red-400":
+          borderColor = "#f87171";
+          break;
+        case "bg-pink-400":
+          borderColor = "#f472b6";
+          break;
+        case "bg-blue-400":
+          borderColor = "#60a5fa";
+          break;
+        case "bg-green-400":
+          borderColor = "#4ade80";
+          break;
+        case "bg-yellow-400":
+          borderColor = "#fbbf24";
+          break;
+        case "bg-amber-400":
+          borderColor = "#f59e0b";
+          break;
+        case "bg-cyan-400":
+          borderColor = "#22d3ee";
+          break;
+        case "bg-fuchsia-400":
+          borderColor = "#d946ef";
+          break;
+        case "bg-purple-400":
+          borderColor = "#9f7aea";
+          break;
+        case "bg-orange-400":
+          borderColor = "#fb923c";
+          break;
+        default:
+          borderColor = "#fb7185"; // Default to "rose" color
       }
 
-      // Number of images to display
       const totalImages = this.capturedImages.length;
 
       let collageWidth, collageHeight;
 
-      // If in landscape mode, create a horizontal collage (flex-row)
+      // Determine collage size based on orientation
       if (this.selectedOrientation === "flex-row") {
-        collageWidth = totalImages * imageWidth; // Total width for the collage
-        collageHeight = imageHeight; // Single row, so height is the same as image height
-      }
-      // If in portrait mode, create a vertical collage (flex-col)
-      else if (this.selectedOrientation === "flex-col") {
-        collageWidth = imageWidth; // Single column, so width is just the image width
-        collageHeight = totalImages * imageHeight; // Total height for the collage
+        collageWidth = totalImages * imageWidth;
+        collageHeight = imageHeight;
+      } else if (this.selectedOrientation === "flex-col") {
+        collageWidth = imageWidth;
+        collageHeight = totalImages * imageHeight;
       }
 
-      // Set the canvas size
       canvas.width = collageWidth;
       canvas.height = collageHeight;
 
       let imagesLoaded = 0;
+      let stickersLoaded = 0;
 
-      // Draw the images
-      this.capturedImages.forEach((imageUrl, index) => {
-        loadImage(imageUrl, (image) => {
-          // Calculate the x and y position for each image
-          let x, y;
+      const stickers = [
+        {
+          src: `${this.imageFolder}/cc1.png`,
+          x: collageWidth * 0.01,
+          y: collageHeight - 150,
+          width: 100,
+          height: 100,
+        },
+        {
+          src: `${this.imageFolder}/cc6.png`,
+          x: collageWidth - 600,
+          y: collageHeight * 0.02,
+          width: 100,
+          height: 100,
+        },
+        {
+          src: `${this.imageFolder}/cc3.png`,
+          x: collageWidth - 100,
+          y: collageHeight - 100,
+          width: 100,
+          height: 100,
+        },
+        {
+          src: `${this.imageFolder}/cc4.png`,
+          x: collageWidth * 0.5,
+          y: collageHeight * 0.01,
+          width: 100,
+          height: 100,
+        },
+        {
+          src: `${this.imageFolder}/cc5.png`,
+          x: collageWidth * 0.1,
+          y: collageHeight * 0.01,
+          width: 100,
+          height: 100,
+        },
+        {
+          src: `${this.imageFolder}/cc2.png`,
+          x: collageWidth * 0.6,
+          y: collageHeight - 150,
+          width: 100,
+          height: 100,
+        },
+      ];
 
-          if (this.selectedOrientation === "flex-row") {
-            x = index * imageWidth; // Horizontal layout
-            y = 0; // Single row
-          } else if (this.selectedOrientation === "flex-col") {
-            x = 0; // Single column
-            y = index * imageHeight; // Vertical layout
-          }
+      const loadAllStickers = (callback) => {
+        stickers.forEach((sticker) => {
+          loadImage(sticker.src, (stickerImage) => {
+            const stickerWidth = Math.min(sticker.width, stickerImage.width);
+            const stickerHeight = Math.min(sticker.height, stickerImage.height);
+            ctx.drawImage(stickerImage, sticker.x, sticker.y, stickerWidth, stickerHeight);
+            stickersLoaded++;
 
-          // Draw the image with border on the canvas
-          drawImageWithBorder(
-            image,
-            x,
-            y,
-            imageWidth,
-            imageHeight,
-            borderThickness,
-            borderColor,
-            ctx,
-            this.selectedFilter
-          );
-
-          imagesLoaded++;
-          // if (this.isStickerClicked) {
-          //   const stickers = [
-          //     {
-          //       src: `${this.imageFolder}/cc1.png`,
-          //       x: collageWidth * 0.02,
-          //       y: collageHeight - 150,
-          //       width: 200,
-          //       height: 200,
-          //     },
-          //     {
-          //       src: `${this.imageFolder}/cc6.png`,
-          //       x: collageWidth - 600,
-          //       y: collageHeight * 0.02,
-          //       width: 200,
-          //       height: 200,
-          //     },
-          //     {
-          //       src: `${this.imageFolder}/cc3.png`,
-          //       x: collageWidth - 250,
-          //       y: collageHeight - 150,
-          //       width: 200,
-          //       height: 200,
-          //     },
-          //     {
-          //       src: `${this.imageFolder}/cc4.png`,
-          //       x: collageWidth * 0.5,
-          //       y: collageHeight * 0.01,
-          //       width: 200,
-          //       height: 200,
-          //     },
-          //     {
-          //       src: `${this.imageFolder}/cc5.png`,
-          //       x: collageWidth * 0.1,
-          //       y: collageHeight * 0.01,
-          //       width: 200,
-          //       height: 200,
-          //     },
-          //     {
-          //       src: `${this.imageFolder}/cc2.png`,
-          //       x: collageWidth * 0.6,
-          //       y: collageHeight - 150,
-          //       width: 200,
-          //       height: 200,
-          //     },
-          //   ];
-
-          //   // Loading each sticker and drawing after images are drawn
-          //   stickers.forEach((sticker) => {
-          //     loadImage(sticker.src, (stickerImage) => {
-          //       // Scale down the sticker image if it's too large
-          //       console.log(`Drawing sticker at x: ${sticker.src}`);
-
-          //       const stickerWidth = Math.min(sticker.width, stickerImage.width);
-          //       const stickerHeight = Math.min(sticker.height, stickerImage.height);
-
-          //       // Debugging sticker positions and sizes
-          //       console.log(`Drawing sticker at x: ${sticker.x}, y: ${sticker.y}`);
-          //       console.log("Sticker Image Dimensions:", stickerImage.width, stickerImage.height);
-
-          //       // Draw sticker AFTER images are drawn, ensuring it's in front
-          //       ctx.drawImage(stickerImage, sticker.x, sticker.y, stickerWidth, stickerHeight);
-          //       stickersLoaded++; // Increment the loaded stickers count
-
-          //       // Check if all stickers are loaded
-          //       if (stickersLoaded === stickers.length) {
-          //         // Trigger the download after adding stickers
-          //         const link = document.createElement("a");
-          //         link.download = "smile.png";
-          //         link.href = canvas.toDataURL("image/png");
-          //         link.click();
-          //       }
-          //     });
-          //   });
-          // } else if (this.isStickerClickedCol) {
-          //   const stickers = [
-          //     {
-          //       src: `${this.imageFolder}/cc1.png`,
-          //       x: collageWidth * 0.02,
-          //       y: collageHeight - 140,
-          //       width: 200,
-          //       height: 200,
-          //     },
-          //     {
-          //       src: `${this.imageFolder}/cc6.png`,
-          //       x: collageWidth - 600,
-          //       y: collageHeight * 0.02,
-          //       width: 200,
-          //       height: 200,
-          //     },
-          //     {
-          //       src: `${this.imageFolder}/cc3.png`,
-          //       x: collageWidth - 250,
-          //       y: collageHeight - 150,
-          //       width: 200,
-          //       height: 200,
-          //     },
-          //     {
-          //       src: `${this.imageFolder}/cc4.png`,
-          //       x: collageWidth * 0.5,
-          //       y: collageHeight * 0.01,
-          //       width: 200,
-          //       height: 200,
-          //     },
-          //     {
-          //       src: `${this.imageFolder}/cc5.png`,
-          //       x: collageWidth * 0.1,
-          //       y: collageHeight * 0.01,
-          //       width: 200,
-          //       height: 200,
-          //     },
-          //     {
-          //       src: `${this.imageFolder}/cc2.png`,
-          //       x: collageWidth * 0.6,
-          //       y: collageHeight - 150,
-          //       width: 200,
-          //       height: 200,
-          //     },
-          //   ];
-
-          //   // Loading each sticker and drawing after images are drawn
-          //   stickers.forEach((sticker) => {
-          //     loadImage(sticker.src, (stickerImage) => {
-          //       // Scale down the sticker image if it's too large
-          //       console.log(`Drawing sticker at x: ${sticker.src}`);
-
-          //       const stickerWidth = Math.min(sticker.width, stickerImage.width);
-          //       const stickerHeight = Math.min(sticker.height, stickerImage.height);
-
-          //       // Debugging sticker positions and sizes
-          //       console.log(`Drawing sticker at x: ${sticker.x}, y: ${sticker.y}`);
-          //       console.log("Sticker Image Dimensions:", stickerImage.width, stickerImage.height);
-
-          //       // Draw sticker AFTER images are drawn, ensuring it's in front
-          //       ctx.drawImage(stickerImage, sticker.x, sticker.y, stickerWidth, stickerHeight);
-          //       stickersLoaded++; // Increment the loaded stickers count
-
-          //       // Check if all stickers are loaded
-          //       if (stickersLoaded === stickers.length) {
-          //         // Trigger the download after adding stickers
-          //         const link = document.createElement("a");
-          //         link.download = "smile.png";
-          //         link.href = canvas.toDataURL("image/png");
-          //         link.click();
-          //       }
-          //     });
-          //   });
-          // } else {
-          //   // If no stickers are clicked, trigger the download immediately
-          //   const link = document.createElement("a");
-          //   link.download = "smile.png";
-          //   link.href = canvas.toDataURL("image/png");
-          //   link.click();
-          // }
-          if (imagesLoaded === totalImages) {
-            const link = document.createElement("a");
-            link.download = "smile.png";
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-          }
+            if (stickersLoaded === stickers.length) {
+              callback();
+            }
+          });
         });
-      });
+      };
+
+      const drawImages = () => {
+        this.capturedImages.forEach((imageUrl, index) => {
+          loadImage(imageUrl, (image) => {
+            let x, y;
+
+            if (this.selectedOrientation === "flex-row") {
+              x = index * imageWidth;
+              y = 0;
+            } else if (this.selectedOrientation === "flex-col") {
+              x = 0;
+              y = index * imageHeight;
+            }
+
+            drawImageWithBorder(
+              image,
+              x,
+              y,
+              imageWidth,
+              imageHeight,
+              borderThickness,
+              borderColor,
+              ctx,
+              this.selectedFilter
+            );
+
+            imagesLoaded++;
+            if (imagesLoaded === totalImages) {
+              if (this.isStickerClicked || this.isStickerClickedCol) {
+                loadAllStickers(() => {
+                  const link = document.createElement("a");
+                  link.download = "smile.png";
+                  link.href = canvas.toDataURL("image/png");
+                  link.click();
+                });
+              } else {
+                const link = document.createElement("a");
+                link.download = "smile.png";
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+              }
+            }
+          });
+        });
+      };
+
+      drawImages();
     },
 
     stickerOn(value) {
