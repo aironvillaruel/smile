@@ -248,14 +248,19 @@ export default {
         };
       };
 
+      // Get the video element to determine its dimensions
+      const videoElement = this.$refs.video;
+      const videoWidth = videoElement.videoWidth;
+      const videoHeight = videoElement.videoHeight;
+
       // Canvas setup
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
       // Image properties
-      const imageWidth = 1600; // Width of each image
-      const imageHeight = 1200; // Height of each image
-      const borderThickness = 200; // Set border thickness to 200px
+      const imageWidth = videoWidth; // Use the video width
+      const imageHeight = videoHeight; // Use the video height
+      const borderThickness = 50; // Set border thickness (adjust as needed)
 
       // Assign borderColor based on selectedColor (using conditional logic)
       let borderColor;
@@ -286,7 +291,7 @@ export default {
         borderColor = "#fb7185"; // Default to "rose" color
       }
 
-      // Number of images to display (all images will be in one row)
+      // Number of images to display
       const totalImages = this.capturedImages.length;
 
       let collageWidth, collageHeight;
@@ -307,24 +312,22 @@ export default {
       canvas.height = collageHeight;
 
       let imagesLoaded = 0;
-      let stickersLoaded = 0; // Track loaded stickers
 
-      // Draw the images in a single row
+      // Draw the images
       this.capturedImages.forEach((imageUrl, index) => {
         loadImage(imageUrl, (image) => {
-          // Calculate the x position for each image (in a straight horizontal line)
+          // Calculate the x and y position for each image
           let x, y;
 
-          // Calculate the x and y position for each image
           if (this.selectedOrientation === "flex-row") {
-            x = index * imageWidth; // Horizontal layout: each image next to each other
-            y = 0; // Single row, so y is always 0
+            x = index * imageWidth; // Horizontal layout
+            y = 0; // Single row
           } else if (this.selectedOrientation === "flex-col") {
-            x = 0; // Single column, so x is always 0
-            y = index * imageHeight; // Vertical layout: each image below the previous one
+            x = 0; // Single column
+            y = index * imageHeight; // Vertical layout
           }
 
-          // Draw the image with border on the canvas (collage section)
+          // Draw the image with border on the canvas
           drawImageWithBorder(
             image,
             x,
@@ -332,169 +335,19 @@ export default {
             imageWidth,
             imageHeight,
             borderThickness,
-            borderColor, // Apply the selected color to the border
+            borderColor,
             ctx,
             this.selectedFilter
           );
 
           imagesLoaded++;
 
-          // Once all images are loaded, draw the stickers
+          // Once all images are loaded, trigger the download
           if (imagesLoaded === totalImages) {
-            // Stickers (calculated dynamically based on canvas size)
-            if (this.isStickerClicked) {
-              const stickers = [
-                {
-                  src: `${this.imageFolder}/cc1.png`,
-                  x: collageWidth * 0.02,
-                  y: collageHeight - 150,
-                  width: 200,
-                  height: 200,
-                },
-                {
-                  src: `${this.imageFolder}/cc6.png`,
-                  x: collageWidth - 600,
-                  y: collageHeight * 0.02,
-                  width: 200,
-                  height: 200,
-                },
-                {
-                  src: `${this.imageFolder}/cc3.png`,
-                  x: collageWidth - 250,
-                  y: collageHeight - 150,
-                  width: 200,
-                  height: 200,
-                },
-                {
-                  src: `${this.imageFolder}/cc4.png`,
-                  x: collageWidth * 0.5,
-                  y: collageHeight * 0.01,
-                  width: 200,
-                  height: 200,
-                },
-                {
-                  src: `${this.imageFolder}/cc5.png`,
-                  x: collageWidth * 0.1,
-                  y: collageHeight * 0.01,
-                  width: 200,
-                  height: 200,
-                },
-                {
-                  src: `${this.imageFolder}/cc2.png`,
-                  x: collageWidth * 0.6,
-                  y: collageHeight - 150,
-                  width: 200,
-                  height: 200,
-                },
-              ];
-
-              // Loading each sticker and drawing after images are drawn
-              stickers.forEach((sticker) => {
-                loadImage(sticker.src, (stickerImage) => {
-                  // Scale down the sticker image if it's too large
-                  console.log(`Drawing sticker at x: ${sticker.src}`);
-
-                  const stickerWidth = Math.min(sticker.width, stickerImage.width);
-                  const stickerHeight = Math.min(sticker.height, stickerImage.height);
-
-                  // Debugging sticker positions and sizes
-                  console.log(`Drawing sticker at x: ${sticker.x}, y: ${sticker.y}`);
-                  console.log("Sticker Image Dimensions:", stickerImage.width, stickerImage.height);
-
-                  // Draw sticker AFTER images are drawn, ensuring it's in front
-                  ctx.drawImage(stickerImage, sticker.x, sticker.y, stickerWidth, stickerHeight);
-                  stickersLoaded++; // Increment the loaded stickers count
-
-                  // Check if all stickers are loaded
-                  if (stickersLoaded === stickers.length) {
-                    // Trigger the download after adding stickers
-                    const link = document.createElement("a");
-                    link.download = "smile.png";
-                    link.href = canvas.toDataURL("image/png");
-                    link.click();
-                  }
-                });
-              });
-            } else if (this.isStickerClickedCol) {
-              const stickers = [
-                {
-                  src: `${this.imageFolder}/cc1.png`,
-                  x: collageWidth * 0.02,
-                  y: collageHeight - 140,
-                  width: 200,
-                  height: 200,
-                },
-                {
-                  src: `${this.imageFolder}/cc6.png`,
-                  x: collageWidth - 600,
-                  y: collageHeight * 0.02,
-                  width: 200,
-                  height: 200,
-                },
-                {
-                  src: `${this.imageFolder}/cc3.png`,
-                  x: collageWidth - 250,
-                  y: collageHeight - 150,
-                  width: 200,
-                  height: 200,
-                },
-                {
-                  src: `${this.imageFolder}/cc4.png`,
-                  x: collageWidth * 0.5,
-                  y: collageHeight * 0.01,
-                  width: 200,
-                  height: 200,
-                },
-                {
-                  src: `${this.imageFolder}/cc5.png`,
-                  x: collageWidth * 0.1,
-                  y: collageHeight * 0.01,
-                  width: 200,
-                  height: 200,
-                },
-                {
-                  src: `${this.imageFolder}/cc2.png`,
-                  x: collageWidth * 0.6,
-                  y: collageHeight - 150,
-                  width: 200,
-                  height: 200,
-                },
-              ];
-
-              // Loading each sticker and drawing after images are drawn
-              stickers.forEach((sticker) => {
-                loadImage(sticker.src, (stickerImage) => {
-                  // Scale down the sticker image if it's too large
-                  console.log(`Drawing sticker at x: ${sticker.src}`);
-
-                  const stickerWidth = Math.min(sticker.width, stickerImage.width);
-                  const stickerHeight = Math.min(sticker.height, stickerImage.height);
-
-                  // Debugging sticker positions and sizes
-                  console.log(`Drawing sticker at x: ${sticker.x}, y: ${sticker.y}`);
-                  console.log("Sticker Image Dimensions:", stickerImage.width, stickerImage.height);
-
-                  // Draw sticker AFTER images are drawn, ensuring it's in front
-                  ctx.drawImage(stickerImage, sticker.x, sticker.y, stickerWidth, stickerHeight);
-                  stickersLoaded++; // Increment the loaded stickers count
-
-                  // Check if all stickers are loaded
-                  if (stickersLoaded === stickers.length) {
-                    // Trigger the download after adding stickers
-                    const link = document.createElement("a");
-                    link.download = "smile.png";
-                    link.href = canvas.toDataURL("image/png");
-                    link.click();
-                  }
-                });
-              });
-            } else {
-              // If no stickers are clicked, trigger the download immediately
-              const link = document.createElement("a");
-              link.download = "smile.png";
-              link.href = canvas.toDataURL("image/png");
-              link.click();
-            }
+            const link = document.createElement("a");
+            link.download = "smile.png";
+            link.href = canvas.toDataURL("image/png");
+            link.click();
           }
         });
       });
