@@ -6,7 +6,8 @@ import HelloWorld from "./components/HelloWorld.vue";
 <template>
   <div class="h-screen flex flex-col">
     <header class="bg-orange-300 shadow-xl border border-zinc-400 p-2 flex items-center flex-row">
-      <img src="/public/Smile.png" class="w-20" />
+      <RouterLink to="/"> <img src="/public/Smile.png" class="w-20" /></RouterLink>
+
       <!-- <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
 
     <div class="wrapper">

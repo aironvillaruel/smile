@@ -2,10 +2,10 @@
 
 <template>
   <div id="landing" class="h-full flex justify-center items-center">
-    <div class="w-1/2 flex justify-center flex-col items-center p-2 gap-5">
+    <div class="w=full md:w-1/2 flex justify-center flex-col items-center p-2 gap-5">
       <img src="/public/smile.png" class="slide-top" />
 
-      <h2 class="text-5xl text-white ubuntu-regular text-focus-in">Where Every Snap Brings a Smile!</h2>
+      <h2 class="text-2xl  md:text-5xl text-white ubuntu-regular text-focus-in">Where Every Snap Brings a Smile!</h2>
       <RouterLink
         to="/photo"
         class="bg-orange-900 text-white ubuntu-bold w-20 text-center rounded-xl shadow-xl hover:scale-105 transition-all duration-300 hover:bg-orange-700 p-2"

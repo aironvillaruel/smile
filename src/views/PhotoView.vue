@@ -26,6 +26,7 @@ export default {
       isStickerClickedCol: false,
       imageFolder: "",
       activeSticker: null,
+      processedImage: false,
     };
   },
   methods: {
@@ -43,11 +44,7 @@ export default {
     startAutoCapture(count) {
       this.numberOfResults = count;
       this.capturedImages = []; // Reset captured images array
-      this.countdown = 5; // Reset countdown to 5 seconds
       this.timerActive = true;
-
-      // Start countdown interval
-      this.startCountdown();
 
       // Set an interval to auto capture and countdown
       this.autoCaptureInterval = setInterval(() => {
@@ -55,15 +52,23 @@ export default {
         console.log(this.capturedImages.length);
 
         if (this.capturedImages.length < this.numberOfResults) {
-          this.capture(); // Capture the image
-          this.countdown = 5; // Reset the countdown for next capture
+          if (this.countdown > 0) {
+            this.countdown -= 1; // Decrement countdown every second
+            this.displayCountdown = this.countdown;
+          } else {
+            this.capture(); // Capture image at the end of countdown
+            this.displayCountdown = null;
+          }
         } else {
           clearInterval(this.autoCaptureInterval); // Stop the interval when number of results is met
           this.timerActive = false; // Stop the timer
-          clearInterval(this.countdownInterval); // Clear the countdown interval
+          this.processedImage = true;
+          setTimeout(() => {
+            this.processedImage = false; // Hide the div after 2 seconds
+          }, 2000);
           this.startRecognition();
         }
-      }, 5000); // Every 5 seconds, capture an image
+      }, 1000); // Update countdown every second
     },
 
     // Method to start the countdown
@@ -78,7 +83,9 @@ export default {
         } else {
           // Reset countdown and capture image
           this.countdown = 5;
-          this.capture(); // Capture image at the end of countdown
+          if (this.capturedImages.length < this.numberOfResults) {
+            this.capture(); // Capture image at the end of countdown
+          }
         }
       }, 1000); // Update countdown every second
     },
@@ -105,13 +112,9 @@ export default {
       // Push the captured image to the capturedImages array
       if (this.capturedImages.length < this.numberOfResults) {
         this.capturedImages.push(capturedImage);
-      } else {
-        this.timerActive = false; // Stop the timer
+        console.log(this.countdown);
       }
 
-      // Reset countdown to 5 after capture
-      console.log(this.capturedImages.length < this.numberOfResults);
-      
       this.countdown = 5; // Reset the countdown for next capture
     },
 
@@ -219,7 +222,7 @@ export default {
           width - borderThickness, // Reduce the width to account for the border
           height - borderThickness // Reduce the height to account for the border
         );
-        ctx.filter = 'none';
+        ctx.filter = "none";
       };
 
       // Helper function to create and load an image, then call a callback when it's loaded
@@ -627,11 +630,23 @@ export default {
 
             <div class="radio-inputs">
               <label class="radio">
-                <input type="radio" name="radio" value="flex-row" v-model="selectedOrientation" />
+                <input
+                  type="radio"
+                  name="radio"
+                  value="flex-row"
+                  v-model="selectedOrientation"
+                  @change="removeSticker"
+                />
                 <span class="name ubuntu-regular">Landscape</span>
               </label>
               <label class="radio">
-                <input type="radio" name="radio" value="flex-col" v-model="selectedOrientation" />
+                <input
+                  type="radio"
+                  name="radio"
+                  value="flex-col"
+                  v-model="selectedOrientation"
+                  @change="removeSticker"
+                />
                 <span class="name ubuntu-regular">Portrait</span>
               </label>
             </div>
@@ -660,12 +675,8 @@ export default {
             <img :src="`${imageFolder}/cc5.png`" class="w-10 top-0 absolute left-20" alt="" />
             <img :src="`${imageFolder}/cc6.png`" class="w-10 top-0 absolute right-40" alt="" />
           </div>
-          <div v-if="isStickerClickedCol" class="z-20 absolute w-full h-full">
-            <img
-              :src="`${imageFolder}/cc1.png`"
-              class="w-10 -bottom-[200%] absolute left-0"
-              alt=""
-            />
+          <div v-if="isStickerClickedCol" class="z-20 absolute w-full">
+            <img :src="`${imageFolder}/cc1.png`" class="w-10 top-[60rem] absolute left-0" alt="" />
             <img
               :src="`${imageFolder}/cc3.png`"
               class="w-10 -bottom-[100%] absolute right-0"
@@ -755,69 +766,73 @@ export default {
       </div>
     </Modal>
 
-    <div class="flex flex-row gap-10 p-2 items-center">
+    <div class="flex flex-col md:flex-row md:gap-10 p-2 items-center">
       <div
-        class="flex flex-col items-center max-h-3/4 w-1/4 gap-5 overflow-y-auto shadow-xl rounded-xl p-4"
+        class="flex flex-col items-center md:max-h-3/4 w-full md:w-1/4 gap-5 md:overflow-y-auto shadow-xl rounded-xl p-2"
       >
-        <h2 class="text-3xl ubuntu-bold">Shots</h2>
-        <div
-          @click="setNumberOfResults(1)"
-          class="border-2 border-orange-700 hover:bg-orange-200 bg-white max-h-1/4 w-1/2 rounded-xl flex items-center justify- shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col gap-10 p-2"
-        >
-          <div class="w-full flex gap-2">
-            <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
-            <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
-            <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+        <h2 class="text-xl md:text-3xl ubuntu-bold">Shots</h2>
+        <div class="w-full overflow-x-auto flex flex-row md:flex-col items-center gap-2 p-2">
+          <div
+            @click="setNumberOfResults(1)"
+            class="border-2 w-1/4 h-3/4 border-orange-700 hover:bg-orange-200 bg-white md:max-h-1/4 md:w-1/2 rounded-xl flex items-center md:justify-between shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col md:gap-10 p-2 pb-4"
+          >
+            <div class="w-full flex gap-2">
+              <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
+              <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
+              <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+            </div>
+            <h2 class="text-2xl md:text-4xl ubuntu-bold flex-1">1</h2>
           </div>
-          <h2 class="text-4xl ubuntu-bold flex-1">1</h2>
-        </div>
-        <div
-          @click="setNumberOfResults(2)"
-          class="border-2 border-orange-700 hover:bg-orange-200 bg-white h-1/4 w-1/2 rounded-xl flex items-center justify-between shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col gap-10 p-2"
-        >
-          <div class="w-full flex gap-2">
-            <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
-            <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
-            <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+          <div
+            @click="setNumberOfResults(2)"
+            class="border-2 w-1/4 h-3/4 border-orange-700 hover:bg-orange-200 bg-white md:h-1/4 md:w-1/2 rounded-xl flex items-center justify-between shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col md:gap-10 p-2 pb-4"
+          >
+            <div class="w-full flex gap-2">
+              <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
+              <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
+              <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+            </div>
+            <h2 class="text-2xl md:text-4xl ubuntu-bold flex-1">2</h2>
           </div>
-          <h2 class="text-4xl ubuntu-bold flex-1">2</h2>
-        </div>
-        <div
-          @click="setNumberOfResults(3)"
-          class="border-2 border-orange-700 hover:bg-orange-200 bg-white h-1/4 w-1/2 rounded-xl flex items-center justify-between shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col gap-10 p-2"
-        >
-          <div class="w-full flex gap-2">
-            <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
-            <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
-            <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+          <div
+            @click="setNumberOfResults(3)"
+            class="border-2 w-1/4 h-3/4 border-orange-700 hover:bg-orange-200 bg-white md:h-1/4 md:w-1/2 rounded-xl flex items-center md:justify-between shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col md:gap-10 p-2 pb-4"
+          >
+            <div class="w-full flex gap-2">
+              <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
+              <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
+              <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+            </div>
+            <h2 class="text-2xl md:text-4xl ubuntu-bold flex-1">3</h2>
           </div>
-          <h2 class="text-4xl ubuntu-bold flex-1">3</h2>
-        </div>
-        <div
-          @click="setNumberOfResults(4)"
-          class="bg-white h-1/4 w-1/2 rounded-xl flex items-center justify-center shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col gap-10 p-2 border-2 border-orange-700 hover:bg-orange-200"
-        >
-          <div class="w-full flex gap-2">
-            <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
-            <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
-            <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+          <div
+            @click="setNumberOfResults(4)"
+            class="bg-white w-1/4 h-3/4 md:h-1/4 md:w-1/2 rounded-xl flex items-center md:justify-between shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col md:gap-10 p-2 border-2 border-orange-700 hover:bg-orange-200 pb-4"
+          >
+            <div class="w-full flex gap-2">
+              <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
+              <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
+              <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+            </div>
+            <h2 class="text-2xl md:text-4xl ubuntu-bold flex-1">4</h2>
           </div>
-          <h2 class="text-4xl ubuntu-bold flex-1">4</h2>
-        </div>
-        <div
-          @click="setNumberOfResults(5)"
-          class="bg-white h-1/4 w-1/2 rounded-xl flex items-center justify-center shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col gap-10 p-2 border-2 border-orange-700 hover:bg-orange-200"
-        >
-          <div class="w-full flex gap-2">
-            <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
-            <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
-            <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+          <div
+            @click="setNumberOfResults(5)"
+            class="bg-white w-1/4 h-3/4 md:h-1/4 md:w-1/2 rounded-xl flex items-center md:justify-between shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer flex-col md:gap-10 p-2 border-2 border-orange-700 hover:bg-orange-200 pb-4"
+          >
+            <div class="w-full flex gap-2">
+              <div class="h-3 w-3 bg-orange-300 rounded-full"></div>
+              <div class="h-3 w-3 bg-orange-500 rounded-full"></div>
+              <div class="h-3 w-3 bg-orange-700 rounded-full"></div>
+            </div>
+            <h2 class="text-2xl md:text-4xl ubuntu-bold flex-1">5</h2>
           </div>
-          <h2 class="text-4xl ubuntu-bold flex-1">5</h2>
         </div>
       </div>
-      <div class="w-1/2 rounded-xl shadow-xl flex justify-center flex-col items-center p-2">
-        <h2 class="text-3xl ubuntu-bold">Camera</h2>
+      <div
+        class="w-full md:w-1/2 rounded-xl md:shadow-xl flex justify-center flex-col items-center p-2"
+      >
+        <h2 class="text-xl md:text-3xl ubuntu-bold">Camera</h2>
         <div class="flex flex-col gap-2">
           <!-- <button @click="stopCamera">Stop Camera</button> -->
           <div class="p-2 gap-3 flex items-center">
@@ -898,7 +913,9 @@ export default {
               <font-awesome-icon icon="fa-solid fa-fire" />
             </button>
           </div>
-          <div class="flex flex-col relative items-center bg-orange-900 p-2">
+          <div
+            class="flex flex-col justify-center md:w-full relative items-center bg-orange-900 p-2"
+          >
             <video
               class="rounded-md shadow-xl"
               ref="video"
@@ -917,7 +934,7 @@ export default {
                   class="bg-white/10 p-10 ubuntu-bold rounded-full w-80 h-80 flex items-center justify-center text-white flash"
                 >
                   <span
-                    class="bg-white/30 p-10 ubuntu-bold rounded-full w-60 h-60 flex items-center justify-center text-white flash "
+                    class="bg-white/30 p-10 ubuntu-bold rounded-full w-60 h-60 flex items-center justify-center text-white flash"
                   >
                     <span
                       class="bg-white/40 p-10 ubuntu-bold rounded-full w-40 h-40 flex items-center justify-center text-white flash"
@@ -928,7 +945,12 @@ export default {
                 </span>
               </p>
             </div>
-
+            <div
+              v-if="processedImage"
+              class="absolute flex items-center justify-center inset-0 bg-black/90"
+            >
+              <p class="text-white text-4xl font-semibold ubuntu-bold">Please wait cutie!!</p>
+            </div>
             <!-- <img src="/public/Smile.png" class="w-20 absolute bottom-14 left-2" /> -->
             <button @click="startAutoCapture(numberOfResults)" class="button">
               <font-awesome-icon icon="fa-solid fa-camera" class="text-xl text-white" />
@@ -936,23 +958,26 @@ export default {
           </div>
         </div>
       </div>
-      <div
-        class="overflow-y-auto h-full border-2 border-orange-500 bg-orange-300 w-1/4 max-h-[75vh] rounded-xl shadow-xl flex flex-col gap-2 items-center p-2"
-      >
-        <h2 class="text-3xl ubuntu-bold">Display</h2>
+      <div class="w-full md:w-1/4 h-3/4 p-5 md:h-3/4 flex flex-col items-center">
+        <h2 class="text-xl md:text-3xl ubuntu-bold">Display</h2>
         <div
-          v-for="index in numberOfResults"
-          :key="index"
-          class="w-3/4 h-1/3 mx-auto bg-white shadow-xl rounded-xl"
+          class="overflow-x-auto md:overflow-y-auto h-full border-2 border-orange-500 bg-orange-300 w-full  rounded-xl shadow-xl flex md:flex-col gap-2 items-center p-2 flex-row"
         >
-          <img
-            v-if="capturedImages[index - 1]"
-            :src="capturedImages[index - 1]"
-            alt="Captured Snapshot"
-            class="w-full h-full object-cover"
-            :style="{ filter: selectedFilter }"
-          />
-          <!-- You can also show the index or any other content if you like -->
+          <div
+            v-for="index in numberOfResults"
+            :key="index"
+            class="md:w-3/4 w-20 md:p-0 p-4  h-full md:h-3/4 md:mx-auto bg-white shadow-xl rounded-xl"
+          >
+          <!-- f -->
+            <img
+              v-if="capturedImages[index - 1]"
+              :src="capturedImages[index - 1]"
+              alt="Captured Snapshot"
+              class="w-full h-full object-cover"
+              :style="{ filter: selectedFilter }"
+            />
+            <!-- You can also show the index or any other content if you like -->
+          </div>
         </div>
         <button
           @click="openModal"
