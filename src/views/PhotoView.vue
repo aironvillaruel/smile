@@ -243,7 +243,13 @@ export default {
       const imageWidth = 1600; // Width of each image
       const imageHeight = 1200; // Height of each image
       const borderThickness = 200; // Set border thickness to 200px
-
+      const isMobile = window.matchMedia("(max-width: 768px)").matches;
+      if (isMobile) {
+        // Reduce image size and border thickness on mobile devices
+        imageWidth = Math.min(800, window.innerWidth * 0.8); // Scale to fit mobile screen
+        imageHeight = (imageWidth / 1600) * 1200; // Maintain aspect ratio
+        borderThickness = 50; // Reduce border thickness on mobile
+      }
       // Assign borderColor based on selectedColor (using conditional logic)
       let borderColor;
       if (this.selectedColor === "bg-rose-400") {
@@ -557,7 +563,9 @@ export default {
           <h2 class="text-2xl font-semibold text-zinc-900 dark:text-white ubuntu-bold">Preview</h2>
         </div>
 
-        <div class="w-full flex flex-col md:flex-row md:justify-between items-center p-1 border-b border-gray-300">
+        <div
+          class="w-full flex flex-col md:flex-row md:justify-between items-center p-1 border-b border-gray-300"
+        >
           <div class="md:w-1/3 w-full">
             <label class="ubuntu-bold text-sm md:text:md">Border:</label>
             <div class="p-2 gap-3 flex md:flex-wrap">
@@ -961,14 +969,14 @@ export default {
       <div class="w-full md:w-1/4 h-3/4 p-5 md:h-3/4 flex flex-col items-center">
         <h2 class="text-xl md:text-3xl ubuntu-bold">Display</h2>
         <div
-          class="overflow-x-auto md:overflow-y-auto h-full border-2 border-orange-500 bg-orange-300 w-full  rounded-xl shadow-xl flex md:flex-col gap-2 items-center p-2 flex-row"
+          class="overflow-x-auto md:overflow-y-auto h-full border-2 border-orange-500 bg-orange-300 w-full rounded-xl shadow-xl flex md:flex-col gap-2 items-center p-2 flex-row"
         >
           <div
             v-for="index in numberOfResults"
             :key="index"
-            class="md:w-3/4 w-20 md:p-0 p-4  h-full md:h-3/4 md:mx-auto bg-white shadow-xl rounded-xl"
+            class="md:w-3/4 w-20 md:p-0 p-4 h-full md:h-3/4 md:mx-auto bg-white shadow-xl rounded-xl"
           >
-          <!-- f -->
+            <!-- f -->
             <img
               v-if="capturedImages[index - 1]"
               :src="capturedImages[index - 1]"
